@@ -28,3 +28,15 @@ export function canRemoveGrass(grass,x,y) {
   }
   return seen.size===grass.size-1;
 }
+
+/** Inclusive tile bounds; derive again after terrain edits. */
+export function terrainBounds(grass) {
+  if (!grass.size) return null;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for (const k of grass) {
+    const {x,y}=point(k);
+    minX=Math.min(minX,x); minY=Math.min(minY,y);
+    maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);
+  }
+  return {minX,minY,maxX,maxY};
+}

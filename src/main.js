@@ -1,13 +1,14 @@
 import './styles.css';
-import {newTerrain} from './core/grid.js';
-import {centerCamera,zoomAt} from './rendering/camera.js';
+import {newTerrain,terrainBounds} from './core/grid.js';
+import {centerCamera,zoomAt,clampCamera} from './rendering/camera.js';
 import {drawWorld} from './rendering/world.js';
 import {bindCameraKeyboard} from './rendering/keyboard-pan.js';
 const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
 const grass=newTerrain();
+const bounds=terrainBounds(grass);
 const sample=[{sprite:'townHall',x:2,y:3},{sprite:'barracks',x:5,y:3},{sprite:'swordsman',x:4,y:6}];
 let camera=null,width=0,height=0,ratio=1,drag=null;
-function render(){ctx.setTransform(ratio,0,0,ratio,0,0);drawWorld(ctx,width,height,camera,grass,sample);}
+function render(){camera=clampCamera(camera,width,height,bounds);ctx.setTransform(ratio,0,0,ratio,0,0);drawWorld(ctx,width,height,camera,grass,sample);}
 function reset(){camera=centerCamera(width,height);render();}
 function resize(){
   const rect=canvas.getBoundingClientRect(),oldW=width,oldH=height;
