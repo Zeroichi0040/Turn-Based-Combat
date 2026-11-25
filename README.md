@@ -13,7 +13,7 @@ npm test
 npm run build
 ```
 
-The initial foundation opens a 10×10 terrain preview with sample buildings and a Swordsman. Hold WASD or arrow keys for smooth camera panning (combine directions for diagonal motion; latest opposing key wins), or use middle/right mouse drag; zoom with the mouse wheel; press Home to reset the camera. This is a renderer preview, not yet the map editor or gameplay.
+The editor opens a blank 10×10 grass map. Choose an asset in the left drawer, then click or drag on the map. Erase removes the occupant first, and grass on a later stroke. Hold WASD or arrow keys for smooth panning, or middle/right mouse drag; scroll to zoom; Home resets the camera. Save and Exit are disabled until map management is implemented; edits are not persistent yet.
 
 ## Development
 
