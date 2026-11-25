@@ -52,3 +52,20 @@ test('failed write leaves previous saved map intact',()=>{
   assert.throws(()=>store.save(a.id,m),/Quota/);
   assert.equal(store.get(a.id).grass.length,100);
 });
+
+test('stale editors cannot overwrite a newer saved map; rename and other maps are preserved',()=>{
+  const {store,storage}=fixture(),a=store.create('Map'),other=store.create('Other');
+  const stale=hydrateMap(a),newer=hydrateMap(a);
+  applyEdit(stale,{mode:'place',category:'units',id:'swordsman'},0,0);
+  applyEdit(newer,{mode:'place',category:'buildings',id:'townHall'},1,1);
+  store.rename(a.id,'Renamed');
+  const updated=store.save(a.id,newer,a);
+  assert.equal(updated.name,'Renamed');assert.equal(store.get(other.id).name,'Other');
+  const raw=storage.getItem(STORAGE_KEY);
+  assert.throws(()=>store.save(a.id,stale,a),/changed in another tab/);
+  assert.equal(storage.getItem(STORAGE_KEY),raw);
+  assert.equal(stale.occupants.size,1);
+  const current=hydrateMap(updated);
+  applyEdit(current,{mode:'place',category:'units',id:'swordsman'},2,2);
+  assert.equal(store.save(a.id,current,updated).occupants.length,2);
+});

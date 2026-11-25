@@ -48,14 +48,14 @@ function renderNav(next=route){
 function openMap(id,mode){
   try{
     const record=store.get(id),map=hydrateMap(record);
-    active={id,mode};savedRevision=map.revision;nav.hidden=true;
+    active={id,mode,baseline:record};savedRevision=map.revision;nav.hidden=true;
     scene.open(map,mode,record.name);updateDirty();
-  }catch(err){report(error,err);}
+  }catch(err){scene.close();active=null;updateDirty();renderNav();report(error,err);}
 }
 function saveActive(){
   if(active?.mode!=='edit')return false;
   try{
-    store.save(active.id,scene.getMap());savedRevision=scene.getMap().revision;
+    active.baseline=store.save(active.id,scene.getMap(),active.baseline);savedRevision=scene.getMap().revision;
     updateDirty();scene.setStatus('Map saved.');document.querySelector('#menu-error').textContent='';exitError.textContent='';return true;
   }catch(err){report(exitDialog.open?exitError:document.querySelector('#menu-error'),err);return false;}
 }
@@ -87,6 +87,7 @@ form.addEventListener('submit',event=>{
     else {store.remove(record.id);formDialog.close();renderNav();}
   }catch(err){report(formError,err);}
 });
+formDialog.addEventListener('close',()=>{if(!formDialog.open)dialogAction=null;});
 document.querySelector('#form-cancel').addEventListener('click',()=>formDialog.close());
 document.querySelector('#exit-save').addEventListener('click',()=>{if(saveActive())closeScene();});
 document.querySelector('#exit-discard').addEventListener('click',closeScene);

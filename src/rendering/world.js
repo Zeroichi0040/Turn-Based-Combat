@@ -3,6 +3,7 @@ import {point} from '../core/grid.js';
 import {worldToScreen} from './camera.js';
 import {sprite} from './sprites.js';
 import {grassVariant,terrainEdges} from './terrain-art.js';
+import {visibleTerrain} from './visible-terrain.js';
 export function drawWorld(ctx,width,height,camera,grass,occupants=[],cursor=null,overlay=null){
   ctx.fillStyle='#000';ctx.fillRect(0,0,width,height);ctx.imageSmoothingEnabled=false;
   ctx.lineWidth=1;
@@ -32,7 +33,7 @@ export function drawWorld(ctx,width,height,camera,grass,occupants=[],cursor=null
     if(fill){ctx.fillStyle=fill;ctx.fillRect(left,top,w,h);}
     if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.strokeRect(left+1,top+1,Math.max(1,w-2),Math.max(1,h-2));ctx.lineWidth=1;}
   }
-  for(const k of grass){const p=point(k);draw('grass',p.x,p.y);}
+  for(const p of visibleTerrain(grass,camera,width,height))draw('grass',p.x,p.y);
   for(const k of overlay?.reachable??[]){const p=point(k);highlight(p.x,p.y,'#c7cf7040','#b8cc81');}
   const counts=[];
   for(const o of occupants){
