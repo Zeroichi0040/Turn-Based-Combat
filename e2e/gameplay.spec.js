@@ -17,7 +17,9 @@ test.beforeEach(async({page})=>{
 test('select, reject distant move, move once, end turn and move again',async({page})=>{
  await page.getByRole('button',{name:'Reset camera'}).click();
  await tile(page,4,4);await expect(page.locator('#status')).toContainText('Swordsman selected');
- await tile(page,7,4);await expect(page.locator('#status')).toHaveText('That tile is not reachable.');
+ await tile(page,7,4);await expect(page.locator('#status')).toHaveText('Select a unit to move.');
+ await tile(page,5,5);await expect(page.locator('#status')).toHaveText('Select a unit to move.');
+ await tile(page,4,4);await expect(page.locator('#status')).toContainText('Swordsman selected');
  await tile(page,5,5);await expect(page.locator('#status')).toContainText('Swordsman moved');
  await tile(page,5,5);await expect(page.locator('#status')).toContainText('already moved');
  await page.getByRole('button',{name:'End turn',exact:true}).click();

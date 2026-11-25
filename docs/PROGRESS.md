@@ -15,10 +15,12 @@ Implemented source: blank 10×10 editor, collapsible sprite category drawer, Pla
 Implemented Start/Edit navigation, named map creation (blank names use unused New Map n), browser-local versioned saves, rename/delete confirmation, explicit save and unsaved-exit choices, read-only Start preview with independent hydrated map. New maps are saved immediately as blank scenarios; discard reverts to last save. Gameplay movement/turns are deferred. Seven new unit tests and three management browser workflows. Owner approved the milestone; stale Exit assertion corrected.
 
 ## Milestone 4 — gameplay and turns
-Implemented independent runtime sessions, stable entity IDs, Swordsman selection and legal destination highlights, cardinal BFS pathfinding through occupied grass, one movement per turn, spent sprite shading, end-turn confirmation and turn counter. Building inspection is available; entry/garrison menus are deferred to milestone 5. No runtime saves. Added seven gameplay unit tests and two Playwright workflows; verification pending.
+Implemented independent runtime sessions, stable entity IDs, Swordsman selection and legal destination highlights, cardinal BFS pathfinding through occupied grass, one movement per turn, spent sprite shading, end-turn confirmation and turn counter. Building inspection is available; entry/garrison menus are deferred to milestone 5. No runtime saves. Added seven gameplay unit tests and two Playwright workflows; CI passed and owner approved PR #4, merged.
+
+## Milestone 5 — garrison system
+Implemented shared capacity-aware entry, deployment and direct transfer; stored unit IDs and null map positions; counts visible on buildings, 2 Barracks slots and 4 Town Hall slots, inspect/select-again, spent shading and cancellation without mutation. Full buildings remain traversable. Production slot and training are deferred to milestone 6. Seven new logic tests and two browser workflows; initial garrison CI passed. Owner requested deselection on unreachable empty tiles and hidden zero-count map badges; implemented with updated selection tests and a new badge browser regression. Latest CI pending.
 
 ## Next
-5. Garrison: building menus, entry, storage, deployment.
 6. Production: recurring orders, capacity pause, cancel.
 7. Sprites and UI polish: dedicated art and interface refinement after mechanics.
 8. Release hardening: integration/browser tests, performance, bug fixes.

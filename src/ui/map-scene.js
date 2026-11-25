@@ -4,6 +4,7 @@ import {centerCameraOnBounds,zoomAt,clampCamera,screenToTile} from '../rendering
 import {drawWorld} from '../rendering/world.js';
 import {bindCameraKeyboard} from '../rendering/keyboard-pan.js';
 import {mountDrawer} from './editor-drawer.js';
+import {createGarrisonDialog} from './garrison-dialog.js';
 import {createSession,renderSession,endTurn} from '../game/session.js';
 import {selectTile,selectionOverlay} from '../game/selection.js';
 
@@ -17,6 +18,11 @@ const turnButton=document.querySelector('#end-turn');
 const turnLabel=document.querySelector('#turn-label');
 let map=null,mode='edit',session=null,selection=null;
 const blocked=()=>Boolean(document.querySelector('dialog[open]'));
+const garrisonDialog=createGarrisonDialog({
+  getSession:()=>session,
+  onDeploy(id){selection={kind:'unit',id};status.textContent='Deployment selected. Choose a highlighted tile or press Escape to cancel.';canvas.focus({preventScroll:true});render();},
+  onClose(){if(session&&!screen.hidden&&!blocked())canvas.focus({preventScroll:true});render();},
+});
 function updateTurn(){turnLabel.textContent=session?'Turn '+session.turn:'';}
 let camera=null,width=0,height=0,ratio=1,gesture=null,hover=null;
 let tool={mode:'place',category:'tiles',id:'grass'};
@@ -76,7 +82,9 @@ canvas.addEventListener('pointerdown',e=>{
   lastPointer={x:e.clientX,y:e.clientY};
   if(session&&e.button===0){
     const tile=tileAt(e.clientX,e.clientY),result=selectTile(session,selection,tile.x,tile.y);
-    selection=result.selection;status.textContent=result.message;render();return;
+    selection=result.selection;status.textContent=result.message;
+    if(result.openBuildingId)garrisonDialog.open(result.openBuildingId);
+    render();return;
   }
   canvas.setPointerCapture(e.pointerId);
   if(e.button===0) {
@@ -89,7 +97,7 @@ canvas.addEventListener('pointerdown',e=>{
   render();
 });
 canvas.addEventListener('pointermove',e=>{
-  if(!map||!camera||screen.hidden||menu.open||(gesture&&gesture.id!==e.pointerId))return;
+  if(!map||!camera||screen.hidden||blocked()||(gesture&&gesture.id!==e.pointerId))return;
   lastPointer={x:e.clientX,y:e.clientY};
   if(gesture?.kind==='paint')paint(e);
   else if(gesture?.kind==='pan'){
@@ -106,14 +114,14 @@ canvas.addEventListener('pointerup',e=>{
 for(const event of ['pointercancel','lostpointercapture'])canvas.addEventListener(event,endGesture);
 window.addEventListener('blur',()=>{endGesture();lastPointer=null;render();});
 canvas.addEventListener('wheel',e=>{
-  e.preventDefault();if(!map||!camera||screen.hidden||gesture||menu.open)return;
+  e.preventDefault();if(!map||!camera||screen.hidden||gesture||blocked())return;
   const rect=canvas.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?height:1);
   lastPointer={x:e.clientX,y:e.clientY};
   camera=zoomAt(camera,e.clientX-rect.left,e.clientY-rect.top,Math.exp(-delta*.001));render();
 },{passive:false});
 bindCameraKeyboard({
   move(dx,dy){if(map&&camera&&!screen.hidden&&!gesture&&!blocked()){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
-  reset(){if(map&&!screen.hidden&&!menu.open)reset();}
+  reset(){if(map&&!screen.hidden&&!blocked())reset();}
 });
 document.querySelector('#reset').addEventListener('click',()=>{reset();canvas.focus({preventScroll:true});});
 document.querySelector('#menu').addEventListener('click',()=>{if(!map||screen.hidden)return;endGesture();menu.showModal();render();});
@@ -149,7 +157,7 @@ return {
     canvas.dataset.mode=mode;
     resize();canvas.focus({preventScroll:true});
   },
-  close(){endGesture();screen.hidden=true;if(menu.open)menu.close();if(turnDialog.open)turnDialog.close();session=null;selection=null;map=null;camera=null;lastPointer=null;},
+  close(){endGesture();screen.hidden=true;if(menu.open)menu.close();if(turnDialog.open)turnDialog.close();garrisonDialog.close();session=null;selection=null;map=null;camera=null;lastPointer=null;},
   getMap(){return map;},
   setStatus(message){status.textContent=message;},
 };
