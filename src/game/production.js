@@ -31,6 +31,7 @@ export function advanceProduction(session){
     const id='entity-'+session.nextId++;
     session.units.set(id,{id,type:order.unitType,position:null,spent:false});
     building.garrison.push(id);
+    building.displayedUnitId=id;
     completed.push({buildingId:building.id,unitId:id,unitType:order.unitType});
     order.remaining=units[order.unitType].trainingTurns;
   }

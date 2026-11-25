@@ -26,7 +26,7 @@ test.beforeEach(async({page})=>{
   await page.getByRole('button',{name:'Play',exact:true}).click();await page.getByRole('button',{name:'Reset camera'}).click();
 });
 test('entry, spent inspection, ready deployment, cancel and direct transfer',async({page})=>{
-  await tile(page,3,4);await tile(page,4,4);await expect(page.locator('#status')).toContainText('garrisoned');
+  await tile(page,3,4);await tile(page,4,4);await tile(page,4,4);await expect(page.locator('#status')).toContainText('garrisoned');
   await openBuilding(page,4,4,'Barracks');
   const dialog=page.getByRole('dialog',{name:'Barracks',exact:true});
   await expect(dialog.locator('.garrison-slot')).toHaveCount(2);
@@ -39,16 +39,16 @@ test('entry, spent inspection, ready deployment, cancel and direct transfer',asy
   await ready.click();await ready.click();await expect(dialog).toBeHidden();await expect(page.locator('#status')).toContainText('Deployment selected');
   await page.keyboard.press('Escape');await expect(page.locator('#status')).toHaveText('Selection cleared.');
   await openBuilding(page,4,4,'Barracks');await expect(page.locator('#garrison-count')).toHaveText('1 / 2 garrisoned');
-  await ready.click();await ready.click();await tile(page,6,4);
+  await ready.click();await ready.click();await tile(page,6,4);await tile(page,6,4);
   await expect(page.locator('#status')).toContainText('garrisoned');
   await openBuilding(page,6,4,'Town Hall');await expect(page.locator('#garrison-slots .garrison-slot')).toHaveCount(4);
   await expect(page.locator('#garrison-count')).toHaveText('1 / 4 garrisoned');
   await expect(page.getByRole('button',{name:'Swordsman slot 1 (spent)',exact:true})).toBeVisible();
 });
 test('full barracks rejects entry and allows traversal',async({page})=>{
-  await tile(page,3,4);await tile(page,4,4);await tile(page,4,3);await tile(page,4,4);
+  await tile(page,3,4);await tile(page,4,4);await tile(page,4,4);await tile(page,4,3);await tile(page,4,4);await tile(page,4,4);
   await tile(page,4,5);await tile(page,4,4);await expect(page.locator('#status')).toHaveText('Garrison is full.');
-  await tile(page,4,3);await expect(page.locator('#status')).toContainText('Swordsman moved');
+  await tile(page,4,3);await tile(page,4,3);await expect(page.locator('#status')).toContainText('Swordsman moved');
   await openBuilding(page,4,4,'Barracks');await expect(page.locator('#garrison-count')).toHaveText('2 / 2 garrisoned');
 });
 
@@ -62,12 +62,12 @@ test('count badges appear only when a building contains units',async({page})=>{
   const labels=()=>page.evaluate(()=>window.__badgeLabels.splice(0));
   await page.getByRole('button',{name:'Reset camera'}).click();
   expect(await labels()).toEqual([]);
-  await tile(page,3,4);await tile(page,4,4);
+  await tile(page,3,4);await tile(page,4,4);await tile(page,4,4);
   await expect(page.locator('#status')).toContainText('garrisoned');
   const occupied=await labels();expect(occupied).toContain('1');expect(occupied).not.toContain('0');
   await turn(page);await openBuilding(page,4,4,'Barracks');
   const ready=page.getByRole('button',{name:'Swordsman slot 1 (ready)',exact:true});
-  await ready.click();await ready.click();await tile(page,3,4);
+  await ready.click();await ready.click();await tile(page,3,4);await tile(page,3,4);
   await expect(page.locator('#status')).toContainText('Swordsman moved');
   await labels();await page.getByRole('button',{name:'Reset camera'}).click();
   expect(await labels()).toEqual([]);

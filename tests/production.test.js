@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createEditorMap,applyEdit} from '../src/editor/map.js';
 import {createSession,entityAt,endTurn,moveUnit,renderSession,reachableCells} from '../src/game/session.js';
+import {selectTile,selectionOverlay} from '../src/game/selection.js';
 import {assignProduction,cancelProduction,productionState} from '../src/game/production.js';
 function setup(){
   const map=createEditorMap();
@@ -25,7 +26,7 @@ test('first next turn produces ready stored unit, repeats, then pauses at capaci
   const id=first[0].unitId,u=s.units.get(id);
   assert.equal(u.spent,false);assert.equal(u.position,null);assert.deepEqual(b.garrison,[id]);
   assert.ok(reachableCells(s,id).size>0);
-  assert.equal([...renderSession(s)].filter(x=>x.sprite==='swordsman').length,1);
+  assert.equal([...renderSession(s)].filter(x=>x.sprite==='swordsman'&&!x.representative).length,1);
   const second=endTurn(s);assert.equal(second.length,1);assert.notEqual(second[0].unitId,id);
   assert.equal(b.garrison.length,2);assert.equal(productionState(b),'paused');
   assert.equal(endTurn(s).length,0);assert.equal(endTurn(s).length,0);
@@ -62,4 +63,22 @@ test('order started in full garrison waits until there is space',()=>{
   cancelProduction(s,b.id);assert.ok(assignProduction(s,b.id,'swordsman'));
   assert.equal(productionState(b),'paused');assert.equal(endTurn(s).length,0);
   assert.ok(moveUnit(s,b.garrison[0],4,3));assert.equal(endTurn(s).length,1);
+});
+
+test('completed unit is a visible representative, selects directly and opens building on second source click',()=>{
+ const {s,b}=setup();assignProduction(s,b.id,'swordsman');const [{unitId:id}]=endTurn(s);
+ assert.equal(b.displayedUnitId,id);
+ assert.equal(entityAt(s,4,4).kind,'building');assert.equal(s.units.get(id).position,null);
+ assert.equal([...renderSession(s)].filter(o=>o.representative).length,1);
+ const first=selectTile(s,null,4,4);assert.deepEqual(first.selection,{kind:'unit',id});
+ assert.ok(selectionOverlay(s,first.selection).reachable.has('4,3'));
+ const second=selectTile(s,first.selection,4,4);assert.equal(second.openBuildingId,b.id);
+ assert.equal(b.displayedUnitId,null);assert.deepEqual(b.garrison,[id]);
+});
+test('directly deploying the representative requires confirmation and removes only its display',()=>{
+ const {s,b}=setup();assignProduction(s,b.id,'swordsman');const [{unitId:id}]=endTurn(s);
+ const first=selectTile(s,null,4,4),preview=selectTile(s,first.selection,4,3);
+ assert.equal(b.displayedUnitId,id);assert.deepEqual(b.garrison,[id]);assert.equal(s.units.get(id).spent,false);
+ assert.equal(selectTile(s,preview.selection,4,3).selection,null);
+ assert.equal(b.displayedUnitId,null);assert.equal(b.garrison.length,0);assert.equal(s.units.get(id).spent,true);
 });

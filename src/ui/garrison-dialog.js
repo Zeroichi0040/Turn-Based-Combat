@@ -14,7 +14,7 @@ export function createGarrisonDialog({getSession,onDeploy,onClose}){
   const productionStatus=document.querySelector('#production-state');
   let buildingId=null,selectedId=null,productionSelected=false;
   const picker=createProductionDialog({getSession,onAssigned(){
-    productionSelected=false;render();status.textContent='Recurring training order assigned.';productionSlot.focus();
+    productionSelected=false;render();status.textContent='Training assigned.';productionSlot.focus();
   }});
   function renderProduction(building){
     const state=productionState(building),order=building.production;
@@ -42,7 +42,7 @@ export function createGarrisonDialog({getSession,onDeploy,onClose}){
     productionSelected=true;selectedId=null;
     for(const slot of slots.querySelectorAll('button[aria-pressed]'))slot.setAttribute('aria-pressed','false');
     productionSlot.setAttribute('aria-pressed','true');
-    status.textContent=building.production?'Training order selected. Use Cancel to stop training.':'Production slot selected. Click again to choose a unit.';
+    status.textContent=building.production?'Training selected.':'Production selected.';
   });
   cancelButton.addEventListener('click',()=>{
     if(cancelProduction(getSession(),buildingId)){productionSelected=false;render();status.textContent='Training cancelled.';productionSlot.focus();}
@@ -73,7 +73,7 @@ export function createGarrisonDialog({getSession,onDeploy,onClose}){
           const result=selectStoredUnit(session,buildingId,selectedId,id);
           selectedId=result.selectedId;productionSelected=false;productionSlot.setAttribute('aria-pressed','false');
           if(result.deploy){dialog.close();onDeploy(id);return;}
-          status.textContent=unit.spent?type.name+' has already moved this turn.':type.name+' selected. Click again to deploy.';
+          status.textContent=unit.spent?type.name+' has already moved this turn.':type.name+' selected.';
           // Keep the same DOM buttons and keyboard focus during inspection.
           for(const slot of slots.querySelectorAll('button[aria-pressed]'))slot.setAttribute('aria-pressed',String(slot===button));
         });
@@ -86,7 +86,7 @@ export function createGarrisonDialog({getSession,onDeploy,onClose}){
   return {
     open(id){
       if(!getSession()?.buildings.has(id))return;
-      buildingId=id;selectedId=null;productionSelected=false;status.textContent='Select a stored unit to inspect it.';render();
+      buildingId=id;selectedId=null;productionSelected=false;status.textContent='';render();
       dialog.showModal();
     },
     close(){picker.close();if(dialog.open)dialog.close();},

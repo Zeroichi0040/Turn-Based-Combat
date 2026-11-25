@@ -14,7 +14,7 @@ export function createProductionDialog({getSession,onAssigned}){
       const session=getSession(),building=session?.buildings.get(id);
       if(!building||building.production||!buildings[building.type].trainable.length||dialog.open)return;
       buildingId=id;selected=null;choices.replaceChildren();
-      status.textContent='Select a unit, then select it again to begin training.';
+      status.textContent='';
       for(const typeId of buildings[building.type].trainable){
         const type=units[typeId],button=document.createElement('button');
         button.type='button';button.className='training-choice';
@@ -31,7 +31,7 @@ export function createProductionDialog({getSession,onAssigned}){
           }
           selected=typeId;
           for(const choice of choices.querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));
-          status.textContent=type.name+' selected. Click again to train.';
+          status.textContent=type.name+' selected.';
         });
         choices.append(button);
       }

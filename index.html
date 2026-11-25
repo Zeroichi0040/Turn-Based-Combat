@@ -6,8 +6,9 @@
 <title>Turn-Based Combat</title>
 </head>
 <body>
-<section id="navigation" class="navigation">
+<section id="navigation" class="navigation" data-route="home">
   <div class="nav-panel">
+    <svg class="nav-crest" aria-hidden="true" viewBox="0 0 40 46" shape-rendering="crispEdges"><path d="M3 3H37V24L33 33L20 43L7 33L3 24Z" fill="#171d19" stroke="currentColor" stroke-width="2"/><path d="M7 7H33V23L29 30L20 38L11 30L7 23Z" fill="#3e6077"/><path d="M12 11H15V14H18V11H22V14H25V11H28V24H24V19H16V24H12Z" fill="#d4c49e"/><path d="M10 26H30V29H10Z" fill="#a78b52"/></svg>
     <h1 id="nav-title">Turn-Based Combat</h1>
     <div id="nav-actions" class="nav-actions"></div>
     <p id="nav-error" role="alert"></p>
@@ -16,7 +17,7 @@
 </section>
 <div id="map-screen" class="map-screen" hidden>
 <header class="editor-header">
-  <div><h1 id="scene-title">Map Editor</h1><p>Turn-Based Combat <span class="header-divider">/</span> <span id="scene-name"></span></p></div>
+  <div><h1 id="scene-title">Map Editor</h1><p><span id="scene-name"></span></p></div>
   <div class="header-actions"><button id="reset" type="button">Reset camera</button><span id="turn-label" hidden></span><button id="end-turn" type="button" aria-label="End turn" title="End turn" hidden>➜</button><button id="menu" class="hamburger" type="button" aria-label="Editor menu"><span></span><span></span><span></span></button></div>
 </header>
 <main class="editor-workspace">
@@ -26,7 +27,7 @@
     <div class="map-overlay" aria-hidden="true"><span id="coordinate">—</span></div>
   </section>
 </main>
-<footer><span id="status" role="status"></span><span class="controls">WASD / arrows · Middle or right drag · Scroll zoom · Home reset</span></footer>
+<footer><span id="status" role="status"></span></footer>
 </div>
 <dialog id="editor-menu" aria-labelledby="menu-title">
   <h2 id="menu-title">Map Editor</h2>
@@ -37,17 +38,17 @@
   <form id="map-form">
     <h2 id="form-title">New Map</h2>
     <p id="form-message"></p>
-    <label id="name-label">Map name<input id="map-name" type="text" maxlength="100" autocomplete="off"></label>
+    <label id="name-label"><span class="sr-only">Map name</span><input id="map-name" type="text" maxlength="100" autocomplete="off"></label>
     <p id="form-error" role="alert"></p>
     <div class="modal-actions"><button id="form-cancel" type="button">Cancel</button><button id="form-confirm" type="submit">Create</button></div>
   </form>
 </dialog>
 <dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
-  <h2 id="unsaved-title">Unsaved changes</h2><p>Save your changes before exiting?</p><p id="exit-error" role="alert"></p>
+  <h2 id="unsaved-title">Unsaved changes</h2><p id="exit-error" role="alert"></p>
   <div class="modal-actions"><button id="exit-save" type="button">Save</button><button id="exit-discard" type="button">Discard</button><button id="exit-cancel" autofocus type="button">Cancel</button></div>
 </dialog>
 <dialog id="end-turn-dialog" aria-labelledby="end-turn-title">
-  <h2 id="end-turn-title">End Turn?</h2><p>All units will be ready to move at the start of the next turn.</p>
+  <h2 id="end-turn-title">End Turn?</h2>
   <div class="modal-actions"><button id="cancel-end-turn" type="button" autofocus>Cancel</button><button id="confirm-end-turn" type="button">End Turn</button></div>
 </dialog>
 <dialog id="garrison-dialog" aria-labelledby="garrison-title">
