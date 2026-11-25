@@ -127,7 +127,10 @@ document.querySelector('#reset').addEventListener('click',()=>{reset();canvas.fo
 document.querySelector('#menu').addEventListener('click',()=>{if(!map||screen.hidden)return;endGesture();menu.showModal();render();});
 turnButton.addEventListener('click',()=>{if(!session||screen.hidden||blocked())return;endGesture();turnDialog.showModal();render();});
 document.querySelector('#confirm-end-turn').addEventListener('click',()=>{
-  if(!session||!turnDialog.open)return;endTurn(session);selection=null;updateTurn();status.textContent='Turn '+session.turn+' — units are ready.';turnDialog.close();render();
+  if(!session||!turnDialog.open)return;
+  const completed=endTurn(session);selection=null;updateTurn();
+  status.textContent='Turn '+session.turn+' — units are ready.'+(completed.length?' '+completed.length+' unit'+(completed.length===1?'':'s')+' trained.':'');
+  turnDialog.close();render();
 });
 document.querySelector('#cancel-end-turn').addEventListener('click',()=>turnDialog.close());
 turnDialog.addEventListener('close',()=>{if(session&&!screen.hidden)canvas.focus({preventScroll:true});render();});

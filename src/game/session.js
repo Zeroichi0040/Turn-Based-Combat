@@ -1,6 +1,7 @@
 import {key,point,cardinal,terrainBounds} from '../core/grid.js';
 import {units,buildings} from '../content/definitions.js';
 import {garrisonOf,hasGarrisonSpace,unitOrigin} from './garrison.js';
+import {advanceProduction} from './production.js';
 
 /** Runtime state is independent of the editor map and has stable entity IDs. */
 export function createSession(map) {
@@ -9,7 +10,7 @@ export function createSession(map) {
   for(const [k,o] of map.occupants){
     const position=point(k),id='entity-'+nextId++;
     if(o.category==='units')unitMap.set(id,{id,type:o.id,position,spent:false});
-    else buildingMap.set(id,{id,type:o.id,position,garrison:[]});
+    else buildingMap.set(id,{id,type:o.id,position,garrison:[],production:null});
   }
   return {grass,bounds:terrainBounds(grass),units:unitMap,buildings:buildingMap,turn:1,nextId};
 }
@@ -54,6 +55,7 @@ export function moveUnit(session,id,x,y){
 export function endTurn(session){
   session.turn++;
   for(const u of session.units.values())u.spent=false;
+  return advanceProduction(session);
 }
 export function* renderSession(session){
   for(const b of session.buildings.values())yield {...b.position,sprite:buildings[b.type].sprite,garrisonCount:b.garrison.length};

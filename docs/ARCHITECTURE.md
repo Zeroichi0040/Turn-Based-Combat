@@ -17,10 +17,12 @@ Current modules:
 - src/game/session.js: independent runtime entity state, BFS reachable destinations, validated movement and turn advancement.
 - src/game/selection.js: transient selection transitions and renderer overlay projection.
 - src/game/garrison.js: shared capacity, stored membership, origin and inspection helpers. Stored unit position is null, and exactly one building owns its ID; movement commits transfer atomically.
-- src/ui/garrison-dialog.js: capacity-driven slots, inspection and deployment callbacks; never changes runtime entity state.
+- src/game/production.js: validated recurring production orders, derived pause state, turn-based unit allocation. Unit IDs use the session counter; completed units enter the garrison directly.
+- src/ui/garrison-dialog.js: capacity-driven slots, inspection, deployment and production controls; mutations delegated to rule functions.
+- src/ui/production-dialog.js: nested training picker; two-step selection and validated order assignment.
 - src/main.js: navigation, modal actions, dirty revision tracking and map persistence coordination.
 - src/styles.css: visual presentation.
 
-Next modules (create as needed): game/ for production rules; ui/ for menus and dialogs.
+Further additions should follow existing game/ and ui/ boundaries.
 
 Authoritative maps should contain terrain and editor occupants only; active sessions are separate copies with runtime unit IDs and state. Use plain serializable data for persistence and sparse sets/maps at runtime. Every future mutation should pass through a rule function that validates before committing; avoid duplicated validation in UI. UI selection and camera state are transient. Cache terrain bounds and refresh them after terrain edits; clamp all camera changes before drawing. Use a viewport transform rather than a world-sized canvas. Culling must not require allocating the entire coordinate bounds.
