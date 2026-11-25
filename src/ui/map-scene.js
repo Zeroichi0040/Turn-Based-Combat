@@ -49,9 +49,10 @@ function render() {
 function reset() {if(!map||gesture||screen.hidden)return;camera=centerCameraOnBounds(width,height,map.bounds);render();}
 function resize() {
   if(!map||screen.hidden)return;
+  const rect=canvas.getBoundingClientRect(),oldW=width,oldH=height,nextRatio=window.devicePixelRatio||1;
+  if(camera&&rect.width===width&&rect.height===height&&nextRatio===ratio)return;
   if(gesture)endGesture();
-  const rect=canvas.getBoundingClientRect(),oldW=width,oldH=height;
-  width=rect.width;height=rect.height;ratio=window.devicePixelRatio||1;
+  width=rect.width;height=rect.height;ratio=nextRatio;
   canvas.width=Math.max(1,Math.round(width*ratio));canvas.height=Math.max(1,Math.round(height*ratio));
   if(!camera){reset();return;}
   camera={...camera,x:camera.x+(width-oldW)/2,y:camera.y+(height-oldH)/2};render();
@@ -120,7 +121,10 @@ canvas.addEventListener('wheel',e=>{
   camera=zoomAt(camera,e.clientX-rect.left,e.clientY-rect.top,Math.exp(-delta*.001));render();
 },{passive:false});
 bindCameraKeyboard({
-  move(dx,dy){if(map&&camera&&!screen.hidden&&!gesture&&!blocked()){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
+  move(dx,dy){if(map&&camera&&!screen.hidden&&!gesture&&!blocked()){
+    const next=clampCamera({...camera,x:camera.x+dx,y:camera.y+dy},width,height,map.bounds);
+    if(next.x!==camera.x||next.y!==camera.y){camera=next;render();}
+  }},
   reset(){if(map&&!screen.hidden&&!blocked())reset();}
 });
 document.querySelector('#reset').addEventListener('click',()=>{reset();canvas.focus({preventScroll:true});});
@@ -142,7 +146,7 @@ document.querySelector('#save-map').addEventListener('click',()=>{if(onSave())me
 document.querySelector('#exit-map').addEventListener('click',()=>{menu.close();onExit();});
 return {
   open(nextMap,nextMode,name){
-    endGesture();map=nextMap;mode=nextMode;session=mode==='play'?createSession(map):null;selection=null;camera=null;lastPointer=null;hover=null;
+    endGesture();document.querySelector('#menu-error').textContent='';map=nextMap;mode=nextMode;session=mode==='play'?createSession(map):null;selection=null;camera=null;lastPointer=null;hover=null;
     turnButton.hidden=!session;turnLabel.hidden=!session;updateTurn();
     screen.hidden=false;
     document.querySelector('#scene-title').textContent=mode==='edit'?'Map Editor':'Battlefield';

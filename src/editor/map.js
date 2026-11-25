@@ -9,9 +9,8 @@ export function createEditorMap() {
 export const categories = Object.freeze({
   tiles: terrain, buildings, units,
 });
-function changed(map, message, terrainChanged=false) {
+function changed(map, message) {
   map.revision++;
-  if (terrainChanged) map.bounds=terrainBounds(map.grass);
   return {changed:true,message};
 }
 const rejected = message => ({changed:false,message});
@@ -29,7 +28,9 @@ export function applyEdit(map, tool, x, y) {
     if (map.grass.size===1) return rejected('Keep at least one grass tile.');
     if (!canRemoveGrass(map.grass,x,y)) return rejected('Cannot disconnect the map.');
     map.grass.delete(k);
-    return changed(map,'Grass erased.',true);
+    const b=map.bounds;
+    if(!b||x===b.minX||x===b.maxX||y===b.minY||y===b.maxY)map.bounds=terrainBounds(map.grass);
+    return changed(map,'Grass erased.');
   }
   if (tool.mode!=='place'||!Object.hasOwn(categories,tool.category)||
       !Object.hasOwn(categories[tool.category],tool.id)) return rejected('Unknown editor tool.');
@@ -37,7 +38,9 @@ export function applyEdit(map, tool, x, y) {
     if (map.grass.has(k)) return rejected('Grass already present.');
     if (!canAddGrass(map.grass,x,y)) return rejected('Grass must touch existing grass on an edge.');
     map.grass.add(k);
-    return changed(map,'Grass placed.',true);
+    const b=map.bounds;
+    map.bounds=b?{minX:Math.min(b.minX,x),minY:Math.min(b.minY,y),maxX:Math.max(b.maxX,x),maxY:Math.max(b.maxY,y)}:terrainBounds(map.grass);
+    return changed(map,'Grass placed.');
   }
   if (!map.grass.has(k)) return rejected('Place on grass.');
   if (occupant && occupant.category!==tool.category) return rejected('Erase the existing occupant first.');

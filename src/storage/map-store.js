@@ -85,8 +85,13 @@ export function createMapStore(storage,{makeId=()=>crypto.randomUUID()}={}){
       const record={...old,name:next};
       write(records.map(r=>r.id===id?record:r));return record;
     },
-    save(id,map){
-      const records=list(),old=find(records,id),record={...old,...serializeMap(map)};
+    save(id,map,expected=null){
+      const records=list(),old=find(records,id);
+      // Detect a stale editor snapshot, but allow independent changes and renames.
+      if(expected&&(JSON.stringify(old.grass)!==JSON.stringify(expected.grass)||
+        JSON.stringify(old.occupants)!==JSON.stringify(expected.occupants)))
+        fail('This map changed in another tab. Your edits are still open; reopen the map before saving.');
+      const record={...old,...serializeMap(map)};
       write(records.map(r=>r.id===id?record:r));return record;
     },
     remove(id){const records=list();find(records,id);write(records.filter(r=>r.id!==id));},
