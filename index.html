@@ -52,9 +52,22 @@
 </dialog>
 <dialog id="garrison-dialog" aria-labelledby="garrison-title">
   <h2 id="garrison-title">Garrison</h2><p id="garrison-count"></p>
-  <div id="garrison-slots" class="garrison-slots" aria-label="Garrison slots"></div>
+  <div class="building-slots">
+    <div id="garrison-slots" class="garrison-slots" aria-label="Garrison slots"></div>
+    <section id="production-panel" class="production-panel" aria-label="Production" hidden>
+      <p class="production-heading">Production</p>
+      <div class="production-controls"><button id="production-slot" class="production-slot" type="button" aria-pressed="false">Empty</button><button id="cancel-production" type="button" aria-label="Cancel production" disabled>Cancel</button></div>
+      <p id="production-state"></p>
+    </section>
+  </div>
   <p id="garrison-status" role="status"></p>
   <div class="modal-actions"><button id="close-garrison" autofocus type="button">Close</button></div>
+</dialog>
+<dialog id="production-dialog" aria-labelledby="production-title">
+  <h2 id="production-title">Train Unit</h2>
+  <div id="production-choices" class="production-choices"></div>
+  <p id="production-status" role="status"></p>
+  <div class="modal-actions"><button id="close-production" autofocus type="button">Back</button></div>
 </dialog>
 <script type="module" src="/src/main.js"></script>
 </body>
