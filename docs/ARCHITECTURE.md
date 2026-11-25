@@ -6,6 +6,7 @@ Current modules:
 - src/core/grid.js: sparse grass coordinates and connectivity; no DOM.
 - src/content/definitions.js: stable content IDs and definitions.
 - src/rendering/camera.js: coordinate transforms and zoom/pan math; no DOM.
+- src/rendering/keyboard-pan.js: held-key order, normalized direction, frame-based pan input and listener cleanup.
 - src/rendering/sprites.js: generated pixel sprites cached by ID.
 - src/rendering/world.js: draw visible terrain and occupants, never mutate map.
 - src/main.js: foundation preview wiring and desktop controls.

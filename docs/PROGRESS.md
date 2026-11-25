@@ -5,6 +5,9 @@ Implemented in source: project shell, stable content definitions, sparse connect
 
 Verification: run npm test and npm run build; CI is configured to do so. Browser playtesting and CI results have not yet been recorded here. The sample preview is intentionally not an editor or game session.
 
+## Foundation follow-up — keyboard navigation
+Owner confirmed the initial foundation works locally. Replaced OS key-repeat panning with frame-clock motion, normalized diagonals, last-pressed priority per axis and focus/blur cleanup. Added regression tests for key state and event integration. Browser playtesting of the change and CI results are not yet recorded.
+
 ## Next
 2. Map editor: actual drawer, placement, universal eraser, drag strokes, validation.
 3. Map management: versioned saves, create/rename/delete, main menu, unsaved exit.
