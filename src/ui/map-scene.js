@@ -4,13 +4,20 @@ import {centerCameraOnBounds,zoomAt,clampCamera,screenToTile} from '../rendering
 import {drawWorld} from '../rendering/world.js';
 import {bindCameraKeyboard} from '../rendering/keyboard-pan.js';
 import {mountDrawer} from './editor-drawer.js';
+import {createSession,renderSession,endTurn} from '../game/session.js';
+import {selectTile,selectionOverlay} from '../game/selection.js';
 
 export function createMapScene({onSave,onExit,onChange}) {
 const screen=document.querySelector('#map-screen');
 const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
 const status=document.querySelector('#status'),coordinate=document.querySelector('#coordinate');
 const menu=document.querySelector('#editor-menu');
-let map=null,mode='edit';
+const turnDialog=document.querySelector('#end-turn-dialog');
+const turnButton=document.querySelector('#end-turn');
+const turnLabel=document.querySelector('#turn-label');
+let map=null,mode='edit',session=null,selection=null;
+const blocked=()=>Boolean(document.querySelector('dialog[open]'));
+function updateTurn(){turnLabel.textContent=session?'Turn '+session.turn:'';}
 let camera=null,width=0,height=0,ratio=1,gesture=null,hover=null;
 let tool={mode:'place',category:'tiles',id:'grass'};
 let lastPointer=null;
@@ -31,7 +38,7 @@ function render() {
     coordinate.textContent=hover.x+', '+hover.y;
   } else {hover=null;coordinate.textContent='—';}
   ctx.setTransform(ratio,0,0,ratio,0,0);
-  drawWorld(ctx,width,height,camera,map.grass,renderOccupants(map),mode==='edit'&&hover&&!menu.open?{...hover,mode:tool.mode}:null);
+  drawWorld(ctx,width,height,camera,map.grass,session?renderSession(session):renderOccupants(map),mode==='edit'&&hover&&!blocked()?{...hover,mode:tool.mode}:null,session?selectionOverlay(session,selection):null);
 }
 function reset() {if(!map||gesture||screen.hidden)return;camera=centerCameraOnBounds(width,height,map.bounds);render();}
 function resize() {
@@ -64,9 +71,13 @@ function paint(event) {
 }
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',e=>{
-  if(!map||screen.hidden||menu.open||gesture||!camera||![0,1,2].includes(e.button)||(mode!=='edit'&&e.button===0))return;
+  if(!map||screen.hidden||blocked()||gesture||!camera||![0,1,2].includes(e.button))return;
   e.preventDefault();canvas.focus({preventScroll:true});
   lastPointer={x:e.clientX,y:e.clientY};
+  if(session&&e.button===0){
+    const tile=tileAt(e.clientX,e.clientY),result=selectTile(session,selection,tile.x,tile.y);
+    selection=result.selection;status.textContent=result.message;render();return;
+  }
   canvas.setPointerCapture(e.pointerId);
   if(e.button===0) {
     gesture={kind:'paint',id:e.pointerId,stroke:createStroke(map,tool)};
@@ -101,11 +112,18 @@ canvas.addEventListener('wheel',e=>{
   camera=zoomAt(camera,e.clientX-rect.left,e.clientY-rect.top,Math.exp(-delta*.001));render();
 },{passive:false});
 bindCameraKeyboard({
-  move(dx,dy){if(map&&camera&&!screen.hidden&&!gesture&&!menu.open){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
+  move(dx,dy){if(map&&camera&&!screen.hidden&&!gesture&&!blocked()){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
   reset(){if(map&&!screen.hidden&&!menu.open)reset();}
 });
 document.querySelector('#reset').addEventListener('click',()=>{reset();canvas.focus({preventScroll:true});});
 document.querySelector('#menu').addEventListener('click',()=>{if(!map||screen.hidden)return;endGesture();menu.showModal();render();});
+turnButton.addEventListener('click',()=>{if(!session||screen.hidden||blocked())return;endGesture();turnDialog.showModal();render();});
+document.querySelector('#confirm-end-turn').addEventListener('click',()=>{
+  if(!session||!turnDialog.open)return;endTurn(session);selection=null;updateTurn();status.textContent='Turn '+session.turn+' — units are ready.';turnDialog.close();render();
+});
+document.querySelector('#cancel-end-turn').addEventListener('click',()=>turnDialog.close());
+turnDialog.addEventListener('close',()=>{if(session&&!screen.hidden)canvas.focus({preventScroll:true});render();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&session&&!screen.hidden&&!blocked()){selection=null;status.textContent='Selection cleared.';render();}});
 document.querySelector('#resume').addEventListener('click',()=>menu.close());
 menu.addEventListener('close',()=>{if(!screen.hidden&&map&&!document.querySelector('dialog[open]'))canvas.focus({preventScroll:true});render();});
 new ResizeObserver(resize).observe(canvas);
@@ -113,11 +131,12 @@ document.querySelector('#save-map').addEventListener('click',()=>{if(onSave())me
 document.querySelector('#exit-map').addEventListener('click',()=>{menu.close();onExit();});
 return {
   open(nextMap,nextMode,name){
-    endGesture();map=nextMap;mode=nextMode;camera=null;lastPointer=null;hover=null;
+    endGesture();map=nextMap;mode=nextMode;session=mode==='play'?createSession(map):null;selection=null;camera=null;lastPointer=null;hover=null;
+    turnButton.hidden=!session;turnLabel.hidden=!session;updateTurn();
     screen.hidden=false;
-    document.querySelector('#scene-title').textContent=mode==='edit'?'Map Editor':'Map Preview';
+    document.querySelector('#scene-title').textContent=mode==='edit'?'Map Editor':'Battlefield';
     document.querySelector('#scene-name').textContent=name;
-    document.querySelector('#menu-title').textContent=mode==='edit'?'Map Editor':'Map Preview';
+    document.querySelector('#menu-title').textContent=mode==='edit'?'Map Editor':'Battlefield';
     document.querySelector('#menu').setAttribute('aria-label',mode==='edit'?'Editor menu':'Game menu');
     document.querySelector('#resume').textContent=mode==='edit'?'Resume':'Continue';
     document.querySelector('#save-map').hidden=mode!=='edit';
@@ -126,11 +145,11 @@ return {
     if(mode==='edit')mountDrawer(document.querySelector('#drawer'),next=>{
       endGesture();tool=next;canvas.dataset.tool=tool.mode;stats();render();
     });
-    status.textContent=mode==='edit'?'Select an asset and click or drag to edit.':'Read-only map preview. Unit movement and turns arrive in milestone 4.';
+    status.textContent=mode==='edit'?'Select an asset and click or drag to edit.':'Select a Swordsman to see its available moves.';
     canvas.dataset.mode=mode;
     resize();canvas.focus({preventScroll:true});
   },
-  close(){endGesture();screen.hidden=true;if(menu.open)menu.close();map=null;camera=null;lastPointer=null;},
+  close(){endGesture();screen.hidden=true;if(menu.open)menu.close();if(turnDialog.open)turnDialog.close();session=null;selection=null;map=null;camera=null;lastPointer=null;},
   getMap(){return map;},
   setStatus(message){status.textContent=message;},
 };

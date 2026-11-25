@@ -12,10 +12,12 @@ Owner confirmed the initial foundation works locally. Replaced OS key-repeat pan
 Implemented source: blank 10×10 editor, collapsible sprite category drawer, Place/Erase, validated occupants, cardinal grass expansion and connected erasure, drag interpolation and one placement attempt per cell per stroke, live terrain bounds and hover outline. Editor menu Resume works; Save and Exit are deliberately disabled until map management in milestone 3. Maps are transient in this milestone. Initial editor CI passed. Owner requested seven-tile camera padding, repeated erasure on tile re-entry (not on stationary events), and an overlay drawer. Implemented and updated regression coverage; Owner approved the revised editor; corrected an outdated camera test input before merge.
 
 ## Milestone 3 — map management
-Implemented Start/Edit navigation, named map creation (blank names use unused New Map n), browser-local versioned saves, rename/delete confirmation, explicit save and unsaved-exit choices, read-only Start preview with independent hydrated map. New maps are saved immediately as blank scenarios; discard reverts to last save. Gameplay movement/turns are deferred. Seven new unit tests and three management browser workflows; verification pending.
+Implemented Start/Edit navigation, named map creation (blank names use unused New Map n), browser-local versioned saves, rename/delete confirmation, explicit save and unsaved-exit choices, read-only Start preview with independent hydrated map. New maps are saved immediately as blank scenarios; discard reverts to last save. Gameplay movement/turns are deferred. Seven new unit tests and three management browser workflows. Owner approved the milestone; stale Exit assertion corrected.
+
+## Milestone 4 — gameplay and turns
+Implemented independent runtime sessions, stable entity IDs, Swordsman selection and legal destination highlights, cardinal BFS pathfinding through occupied grass, one movement per turn, spent sprite shading, end-turn confirmation and turn counter. Building inspection is available; entry/garrison menus are deferred to milestone 5. No runtime saves. Added seven gameplay unit tests and two Playwright workflows; verification pending.
 
 ## Next
-4. Gameplay: selection, movement/pathfinding, turns and confirmations.
 5. Garrison: building menus, entry, storage, deployment.
 6. Production: recurring orders, capacity pause, cancel.
 7. Sprites and UI polish: dedicated art and interface refinement after mechanics.
