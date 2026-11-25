@@ -1,6 +1,6 @@
 # Architecture
 
-Vanilla JavaScript ES modules, Vite for dev/build, Canvas 2D for world rendering, DOM/CSS for interface, Node built-in test runner for pure logic. Browser tests will be added with interactive features.
+Vanilla JavaScript ES modules, Vite for dev/build, Canvas 2D for world rendering, DOM/CSS for interface, Node built-in test runner for pure logic. Playwright Chromium tests cover real UI workflows. CI runs unit tests, production build and browser tests.
 
 Current modules:
 - src/core/grid.js: sparse grass coordinates, terrain bounds and connectivity; no DOM.
@@ -9,11 +9,12 @@ Current modules:
 - src/rendering/keyboard-pan.js: held-key order, normalized direction, frame-based pan input and listener cleanup.
 - src/rendering/sprites.js: shared-palette native 32×32 pixel art, cached by ID (grass additionally uses eight variants and 16 edge masks).
 - src/rendering/terrain-art.js: deterministic coordinate hash and cardinal exposed-edge mask, pure rendering helpers; not persisted.
+- src/rendering/visible-terrain.js: choose sparse scan or viewport membership queries based on estimated work, never allocate world bounds.
 - src/rendering/world.js: draw visible terrain and occupants, never mutate map.
 - src/editor/map.js: authoritative editor map and validated placement/erase commands; runtime occupants keyed by coordinate.
 - src/editor/stroke.js: cardinal interpolation, placement deduplication and one-layer-per-entry erasure; tool frozen at stroke start. Break interpolation over overlays.
 - src/ui/editor-drawer.js: sprite-based category rail and tool controls; drawer overlays a fixed-size viewport.
-- src/storage/map-store.js: versioned local storage, strict validation, serialization/hydration and map CRUD; no DOM.
+- src/storage/map-store.js: versioned local storage, strict validation, serialization/hydration, map CRUD and stale-snapshot detection; no DOM.
 - src/ui/map-scene.js: reusable editor/gameplay wiring, pointer gestures and camera; freezes camera during painting, clamps after stroke.
 - src/game/session.js: independent runtime entity state, BFS reachable paths and destinations, validated movement and turn advancement.
 - src/game/selection.js: transient selection, pending destination and path projection; second matching click commits validated movement. Opening a building dismisses its presentation-only representative ID.

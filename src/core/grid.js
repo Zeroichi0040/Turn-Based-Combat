@@ -16,9 +16,8 @@ export function canAddGrass(grass,x,y) {
 export function canRemoveGrass(grass,x,y) {
   const removed=key(x,y);
   if(!grass.has(removed)||grass.size<=1) return false;
-  const neighbors=cardinal(x,y).map(([a,b])=>key(a,b)).filter(k=>grass.has(k));
-  if(!neighbors.length)return false;
-  const start=neighbors[0];
+  const start=cardinal(x,y).map(([a,b])=>key(a,b)).find(k=>grass.has(k));
+  if(!start) return false;
   const seen=new Set([start]), queue=[start];
   for(let i=0;i<queue.length;i++){
     const p=point(queue[i]);
