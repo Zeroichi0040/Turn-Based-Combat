@@ -35,7 +35,9 @@ export function drawWorld(ctx,width,height,camera,grass,occupants=[],cursor=null
   for(const k of grass){const p=point(k);draw('grass',p.x,p.y);}
   for(const k of overlay?.reachable??[]){const p=point(k);highlight(p.x,p.y,'#c7cf7040','#b8cc81');}
   const counts=[];
-  for(const o of occupants){draw(o.sprite,o.x,o.y,o.spent);if(Number.isInteger(o.garrisonCount)&&o.garrisonCount>0)counts.push(o);}
+  for(const o of occupants){
+    if(o.representative&&overlay?.deployment?.x===o.x&&overlay.deployment.y===o.y)continue;
+    draw(o.sprite,o.x,o.y,o.spent);if(Number.isInteger(o.garrisonCount)&&o.garrisonCount>0)counts.push(o);}
   if(overlay?.deployment){const d=overlay.deployment;draw(d.sprite,d.x,d.y);}
   // Count badges are drawn last so a deployment preview never obscures them.
   for(const o of counts){
@@ -55,6 +57,20 @@ export function drawWorld(ctx,width,height,camera,grass,occupants=[],cursor=null
         ctx.fillRect(dx>0?a:a-l+1,b,l,2);ctx.fillRect(a,dy>0?b:b-l+1,2,l);
       }
     }
+  }
+  if(overlay?.path?.length>1){
+    const path=overlay.path.map(p=>worldToScreen(camera,(p.x+.5)*TILE_SIZE,(p.y+.5)*TILE_SIZE));
+    const destination=overlay.path.at(-1);
+    highlight(destination.x,destination.y,'#ffffff35','#fff');
+    const a=path.at(-2),b=path.at(-1),length=Math.hypot(b.x-a.x,b.y-a.y);
+    const dx=(b.x-a.x)/length,dy=(b.y-a.y)/length,head=Math.max(5,Math.min(15,size*.23));
+    ctx.save();ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);
+    for(const p of path.slice(1))ctx.lineTo(p.x,p.y);
+    ctx.moveTo(b.x-dx*head-dy*head*.65,b.y-dy*head+dx*head*.65);
+    ctx.lineTo(b.x,b.y);ctx.lineTo(b.x-dx*head+dy*head*.65,b.y-dy*head-dx*head*.65);
+    ctx.strokeStyle='#192019';ctx.lineWidth=5;ctx.stroke();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.stroke();ctx.restore();
   }
   if(cursor)highlight(cursor.x,cursor.y,null,cursor.mode==='erase'?'#db795e':'#e7cf82');
 }

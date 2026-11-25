@@ -48,7 +48,7 @@ test('training repeats, pauses at capacity and resumes after deployment',async({
   await expect(page.locator('#production-slot')).toHaveClass(/paused/);await closeBuilding(page);
   await turn(page);await openBuilding(page,4,'Barracks');await expect(page.locator('#garrison-count')).toHaveText('2 / 2 garrisoned');
   const ready=page.getByRole('button',{name:'Swordsman slot 1 (ready)',exact:true});
-  await ready.click();await ready.click();await tile(page,3,4);
+  await ready.click();await ready.click();await tile(page,3,4);await tile(page,3,4);
   await openBuilding(page,4,'Barracks');
   await expect(page.locator('#production-state')).toContainText('Training');await expect(page.locator('#garrison-count')).toHaveText('1 / 2 garrisoned');
   await closeBuilding(page);await turn(page);await openBuilding(page,4,'Barracks');
@@ -65,4 +65,12 @@ test('picker back and cancellation do not train units; town hall has no producti
   await page.getByRole('button',{name:'Cancel production'}).click();await expect(slot).toBeVisible();
   await closeBuilding(page);await turn(page);await openBuilding(page,4,'Barracks');
   await expect(page.locator('#garrison-count')).toHaveText('0 / 2 garrisoned');
+});
+
+test('completed unit can be selected and deployed directly from barracks tile',async({page})=>{
+ await openBuilding(page,4,'Barracks');await order(page);await closeBuilding(page);await turn(page);
+ await tile(page,4,4);await expect(page.locator('#status')).toHaveText('Swordsman selected');
+ await tile(page,3,4);await expect(page.locator('#status')).toHaveText('Confirm move');
+ await tile(page,3,4);await expect(page.locator('#status')).toContainText('Swordsman moved');
+ await openBuilding(page,4,'Barracks');await expect(page.locator('#garrison-count')).toHaveText('0 / 2 garrisoned');
 });

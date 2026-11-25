@@ -37,7 +37,9 @@ test('selection highlights reachable cells, commits legal moves and rejects inva
  assert.equal(rejected.selection,null);assert.equal(selectionOverlay(session,rejected.selection),null);
  assert.equal(session.units.get(id).spent,false);assert.deepEqual(session.units.get(id).position,{x:4,y:4});
  assert.equal(selectTile(session,first.selection,-1,4).selection,null);
- assert.equal(selectTile(session,first.selection,5,5).selection,null);assert.equal(session.units.get(id).spent,true);
+ const preview=selectTile(session,first.selection,5,5);assert.equal(preview.selection.destination,'5,5');
+ assert.equal(session.units.get(id).spent,false);assert.equal(selectionOverlay(session,preview.selection).path.length,3);
+ assert.equal(selectTile(session,preview.selection,5,5).selection,null);assert.equal(session.units.get(id).spent,true);
  const spent=selectTile(session,null,5,5);assert.equal(selectionOverlay(session,spent.selection).reachable.size,0);
 });
 test('building selection remains inspectable and unit IDs are distinct',()=>{
@@ -45,4 +47,16 @@ test('building selection remains inspectable and unit IDs are distinct',()=>{
  const first=selectTile(s,null,3,4);assert.equal(first.selection.kind,'building');
  assert.equal(selectTile(s,first.selection,3,4).openBuildingId,first.selection.id);
  assert.notEqual(entityAt(s,3,4).entity.id,entityAt(s,4,4).entity.id);
+});
+
+test('destination can change or cancel without movement; preview follows valid terrain',()=>{
+ const {map}=setup();applyEdit(map,{mode:'erase'},5,4);
+ const s=createSession(map),id=entityAt(s,4,4).entity.id;
+ let selected=selectTile(s,null,4,4).selection;
+ selected=selectTile(s,selected,4,3).selection;
+ selected=selectTile(s,selected,5,5).selection;
+ assert.deepEqual(selectionOverlay(s,selected).path,[{x:4,y:4},{x:4,y:5},{x:5,y:5}]);
+ assert.equal(s.units.get(id).spent,false);
+ assert.equal(selectTile(s,selected,9,9).selection,null);
+ assert.equal(s.units.get(id).spent,false);
 });

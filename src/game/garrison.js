@@ -17,3 +17,12 @@ export function selectStoredUnit(session,buildingId,selectedId,unitId){
   if(!b?.garrison.includes(unitId)||!u)return {selectedId:null,deploy:false};
   return {selectedId:unitId,deploy:selectedId===unitId&&!u.spent};
 }
+
+/** Display a completed unit without creating another map occupant. */
+export function displayedUnit(session,building){
+  const id=building?.displayedUnitId;
+  return id&&building.garrison.includes(id)?session.units.get(id)??null:null;
+}
+export function dismissDisplayedUnit(session,buildingId){
+  const b=session.buildings.get(buildingId);if(b)b.displayedUnitId=null;
+}

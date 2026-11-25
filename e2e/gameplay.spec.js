@@ -20,7 +20,7 @@ test('select, reject distant move, move once, end turn and move again',async({pa
  await tile(page,7,4);await expect(page.locator('#status')).toHaveText('Select a unit to move.');
  await tile(page,5,5);await expect(page.locator('#status')).toHaveText('Select a unit to move.');
  await tile(page,4,4);await expect(page.locator('#status')).toContainText('Swordsman selected');
- await tile(page,5,5);await expect(page.locator('#status')).toContainText('Swordsman moved');
+ await tile(page,5,5);await expect(page.locator('#status')).toHaveText('Confirm move');await tile(page,5,5);await expect(page.locator('#status')).toContainText('Swordsman moved');
  await tile(page,5,5);await expect(page.locator('#status')).toContainText('already moved');
  await page.getByRole('button',{name:'End turn',exact:true}).click();
  await expect(page.getByRole('dialog',{name:'End Turn?'})).toBeVisible();
@@ -28,11 +28,11 @@ test('select, reject distant move, move once, end turn and move again',async({pa
  await page.getByRole('button',{name:'End turn',exact:true}).click();
  await page.getByRole('dialog').getByRole('button',{name:'End Turn',exact:true}).click();
  await expect(page.locator('#turn-label')).toHaveText('Turn 2');
- await tile(page,5,5);await tile(page,7,5);await expect(page.locator('#status')).toContainText('Swordsman moved');
+ await tile(page,5,5);await tile(page,7,5);await tile(page,7,5);await expect(page.locator('#status')).toContainText('Swordsman moved');
 });
 test('exiting and starting again restores the saved layout and initial turn',async({page})=>{
  await page.getByRole('button',{name:'Reset camera'}).click();
- await tile(page,4,4);await tile(page,6,4);
+ await tile(page,4,4);await tile(page,6,4);await tile(page,6,4);
  await page.getByRole('button',{name:'Game menu'}).click();await page.getByRole('button',{name:'Exit',exact:true}).click();
  await page.getByRole('button',{name:'Play',exact:true}).click();await expect(page.locator('#turn-label')).toHaveText('Turn 1');
  await page.getByRole('button',{name:'Reset camera'}).click();await tile(page,4,4);await expect(page.locator('#status')).toContainText('Swordsman selected');
