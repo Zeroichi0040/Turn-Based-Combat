@@ -19,7 +19,7 @@ test('axes center independently when padded map fits viewport',()=>{
 });
 test('bounds track negative-coordinate expansion and subsequent erasure',()=>{
   const g=newTerrain(1);g.add(key(-1,0));g.add(key(-2,0));
-  const c={x:999,y:0,zoom:4};
+  const c={x:10000,y:0,zoom:4};
   assert.equal(clampCamera(c,300,300,terrainBounds(g)).x,1152);
   g.delete(key(-2,0));
   assert.equal(clampCamera(c,300,300,terrainBounds(g)).x,1024);
