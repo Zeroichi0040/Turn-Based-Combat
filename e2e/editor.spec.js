@@ -8,7 +8,7 @@ async function tile(page,x,y,bounds=initial){
   return {x:box.x+c.x+(x+.5)*32*c.zoom,y:box.y+c.y+(y+.5)*32*c.zoom};
 }
 async function clickTile(page,x,y,bounds){const p=await tile(page,x,y,bounds);await page.mouse.click(p.x,p.y);}
-test.beforeEach(async({page})=>{await page.goto('/');await expect(page.locator('#map-stats')).toHaveText('100 grass · 0 occupants');});
+test.beforeEach(async({page})=>{await page.goto('/');await page.getByRole('button',{name:'Edit',exact:true}).click();await page.getByRole('button',{name:'New Map'}).click();await page.getByRole('button',{name:'Create',exact:true}).click();await expect(page.locator('#map-stats')).toHaveText('100 grass · 0 occupants');});
 test('drawer tabs, same-category replacement, cross-category rejection and universal erase',async({page})=>{
   await page.getByRole('button',{name:'Close drawer'}).click();
   await expect(page.locator('#drawer-panel')).toBeHidden();
@@ -32,11 +32,11 @@ test('grass expands cardinally and drag painting fills fast pointer gaps',async(
   await clickTile(page,10,0,{...initial,maxX:11});
   await expect(page.locator('#status')).toHaveText('Cannot disconnect the map.');
 });
-test('editor modal resumes without losing edits and persistence is explicitly deferred',async({page})=>{
+test('editor modal resumes without losing edits',async({page})=>{
   await page.getByRole('button',{name:'Buildings'}).click();await clickTile(page,2,2);
   await page.getByRole('button',{name:'Editor menu'}).click();
   const dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole('button',{name:'Save'})).toBeDisabled();
+  await expect(dialog.getByRole('button',{name:'Save'})).toBeEnabled();
   await expect(dialog.getByRole('button',{name:'Exit'})).toBeDisabled();
   await dialog.getByRole('button',{name:'Resume'}).click();await expect(dialog).toBeHidden();
   await expect(page.locator('#map-stats')).toHaveText('100 grass · 1 occupants');

@@ -1,113 +1,94 @@
 import './styles.css';
-import {createEditorMap,renderOccupants} from './editor/map.js';
-import {createStroke} from './editor/stroke.js';
-import {centerCameraOnBounds,zoomAt,clampCamera,screenToTile} from './rendering/camera.js';
-import {drawWorld} from './rendering/world.js';
-import {bindCameraKeyboard} from './rendering/keyboard-pan.js';
-import {mountDrawer} from './ui/editor-drawer.js';
+import {createMapStore,hydrateMap} from './storage/map-store.js';
+import {createMapScene} from './ui/map-scene.js';
 
-const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
-const status=document.querySelector('#status'),coordinate=document.querySelector('#coordinate');
-const menu=document.querySelector('#editor-menu');
-const map=createEditorMap();
-let camera=null,width=0,height=0,ratio=1,gesture=null,hover=null;
-let tool={mode:'place',category:'tiles',id:'grass'};
-let lastPointer=null;
-function stats() {
-  const el=document.querySelector('#map-stats');
-  if(el)el.textContent=map.grass.size+' grass · '+map.occupants.size+' occupants';
+const nav=document.querySelector('#navigation'),heading=document.querySelector('#nav-title');
+const actions=document.querySelector('#nav-actions'),list=document.querySelector('#map-list');
+const error=document.querySelector('#nav-error');
+const formDialog=document.querySelector('#map-dialog'),form=document.querySelector('#map-form');
+const formTitle=document.querySelector('#form-title'),nameField=document.querySelector('#map-name');
+const nameLabel=document.querySelector('#name-label'),formMessage=document.querySelector('#form-message');
+const formError=document.querySelector('#form-error'),confirmButton=document.querySelector('#form-confirm');
+const exitDialog=document.querySelector('#unsaved-dialog'),exitError=document.querySelector('#exit-error');
+let route='home',active=null,savedRevision=0,dialogAction=null;
+let store;
+try{store=createMapStore(window.localStorage);}catch{error.textContent='Browser storage is unavailable.';}
+const dirty=()=>active?.mode==='edit'&&scene.getMap()?.revision!==savedRevision;
+function warnUnload(event){if(dirty()){event.preventDefault();event.returnValue='';}}
+function updateDirty(){window.removeEventListener('beforeunload',warnUnload);if(dirty())window.addEventListener('beforeunload',warnUnload);}
+const scene=createMapScene({onSave:saveActive,onExit:requestExit,onChange:updateDirty});
+function button(label,fn){
+  const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',fn);return b;
 }
-function tileAt(clientX,clientY) {
-  const rect=canvas.getBoundingClientRect();
-  return screenToTile(camera,clientX-rect.left,clientY-rect.top);
-}
-function render() {
-  if(!camera)return;
-  // Freeze camera transform while painting; clamp to updated bounds at stroke end.
-  if(gesture?.kind!=='paint')camera=clampCamera(camera,width,height,map.bounds);
-  if(lastPointer) {
-    hover=tileAt(lastPointer.x,lastPointer.y);
-    coordinate.textContent=hover.x+', '+hover.y;
-  } else {hover=null;coordinate.textContent='—';}
-  ctx.setTransform(ratio,0,0,ratio,0,0);
-  drawWorld(ctx,width,height,camera,map.grass,renderOccupants(map),hover&&!menu.open?{...hover,mode:tool.mode}:null);
-}
-function reset() {if(gesture)return;camera=centerCameraOnBounds(width,height,map.bounds);render();}
-function resize() {
-  if(gesture)endGesture();
-  const rect=canvas.getBoundingClientRect(),oldW=width,oldH=height;
-  width=rect.width;height=rect.height;ratio=window.devicePixelRatio||1;
-  canvas.width=Math.max(1,Math.round(width*ratio));canvas.height=Math.max(1,Math.round(height*ratio));
-  if(!camera){reset();return;}
-  camera={...camera,x:camera.x+(width-oldW)/2,y:camera.y+(height-oldH)/2};render();
-}
-function endGesture(event) {
-  if(!gesture||(event?.pointerId!=null&&event.pointerId!==gesture.id))return;
-  const id=gesture.id;gesture=null;
-  canvas.classList.remove('dragging');
-  if(canvas.hasPointerCapture(id))canvas.releasePointerCapture(id);
-  render();
-}
-function paint(event) {
-  const rect=canvas.getBoundingClientRect();
-  // Captured pointer events outside the canvas must not edit invisible cells.
-  if(event.clientX<rect.left||event.clientX>=rect.right||event.clientY<rect.top||event.clientY>=rect.bottom||
-    document.elementFromPoint(event.clientX,event.clientY)?.closest('#drawer')) {
-    gesture.stroke.breakPath();
+function report(target,err){target.textContent=err instanceof Error?err.message:'Operation failed.';}
+function renderNav(next=route){
+  route=next;nav.hidden=false;heading.textContent=next==='home'?'Turn-Based Combat':next==='edit'?'Manage Maps':'Select Map';
+  actions.replaceChildren();list.replaceChildren();error.textContent='';
+  if(next==='home'){
+    actions.append(button('Start',()=>renderNav('start')),button('Edit',()=>renderNav('edit')));
     return;
   }
-  const result=gesture.stroke.visit(tileAt(event.clientX,event.clientY));
-  if(result.last)status.textContent=result.last.message;
-  if(result.changed)stats();
+  actions.append(button('Back',()=>renderNav('home')));
+  if(next==='edit')actions.append(button('New Map',()=>openForm('create')));
+  try{
+    if(!store)throw new Error('Browser storage is unavailable.');
+    const records=store.list();
+    if(!records.length){const p=document.createElement('p');p.textContent=next==='edit'?'No saved maps. Create one to begin.':'No saved maps. Create one in Edit first.';list.append(p);}
+    for(const record of records){
+      const row=document.createElement('article');row.className='saved-map';row.dataset.mapId=record.id;
+      const details=document.createElement('div'),title=document.createElement('h3'),meta=document.createElement('p');
+      title.textContent=record.name;meta.textContent=record.grass.length+' grass · '+record.occupants.length+' occupants';details.append(title,meta);
+      const buttons=document.createElement('div');buttons.className='map-row-actions';
+      if(next==='edit')buttons.append(button('Edit',()=>openMap(record.id,'edit')),button('Rename',()=>openForm('rename',record)),button('Delete',()=>openForm('delete',record)));
+      else buttons.append(button('Play',()=>openMap(record.id,'play')));
+      row.append(details,buttons);list.append(row);
+    }
+  }catch(err){report(error,err);}
 }
-canvas.addEventListener('contextmenu',e=>e.preventDefault());
-canvas.addEventListener('pointerdown',e=>{
-  if(menu.open||gesture||!camera||![0,1,2].includes(e.button))return;
-  e.preventDefault();canvas.focus({preventScroll:true});
-  lastPointer={x:e.clientX,y:e.clientY};
-  canvas.setPointerCapture(e.pointerId);
-  if(e.button===0) {
-    gesture={kind:'paint',id:e.pointerId,stroke:createStroke(map,tool)};
-    paint(e);
-  } else {
-    gesture={kind:'pan',id:e.pointerId,x:e.clientX,y:e.clientY};
-    canvas.classList.add('dragging');
-  }
-  render();
+function openMap(id,mode){
+  try{
+    const record=store.get(id),map=hydrateMap(record);
+    active={id,mode};savedRevision=map.revision;nav.hidden=true;
+    scene.open(map,mode,record.name);updateDirty();
+  }catch(err){report(error,err);}
+}
+function saveActive(){
+  if(active?.mode!=='edit')return false;
+  try{
+    store.save(active.id,scene.getMap());savedRevision=scene.getMap().revision;
+    updateDirty();scene.setStatus('Map saved.');document.querySelector('#menu-error').textContent='';exitError.textContent='';return true;
+  }catch(err){report(exitDialog.open?exitError:document.querySelector('#menu-error'),err);return false;}
+}
+function closeScene(){
+  if(exitDialog.open)exitDialog.close();scene.close();active=null;updateDirty();renderNav();
+}
+function requestExit(){
+  if(dirty()){exitError.textContent='';exitDialog.showModal();}
+  else closeScene();
+}
+function openForm(kind,record){
+  dialogAction={kind,record};
+  formTitle.textContent=kind==='create'?'New Map':kind==='rename'?'Rename Map':'Delete Map?';
+  nameLabel.hidden=kind==='delete';nameField.disabled=kind==='delete';
+  nameField.value=kind==='rename'?record.name:'';
+  formMessage.textContent=kind==='delete'?'Delete “'+record.name+'”? This cannot be undone.':kind==='create'?'Leave the name blank to use the next available New Map number.':'';
+  confirmButton.textContent=kind==='create'?'Create':kind==='rename'?'Rename':'Delete';
+  formError.textContent='';formDialog.showModal();
+  (kind==='delete'?document.querySelector('#form-cancel'):nameField).focus();
+}
+form.addEventListener('submit',event=>{
+  event.preventDefault();if(!dialogAction)return;
+  const {kind,record}=dialogAction;
+  try{
+    if(!store)throw new Error('Browser storage is unavailable.');
+    if(kind==='create'){const created=store.create(nameField.value);formDialog.close();openMap(created.id,'edit');}
+    else if(kind==='rename'){store.rename(record.id,nameField.value);formDialog.close();renderNav();}
+    else {store.remove(record.id);formDialog.close();renderNav();}
+  }catch(err){report(formError,err);}
 });
-canvas.addEventListener('pointermove',e=>{
-  if(!camera||menu.open||(gesture&&gesture.id!==e.pointerId))return;
-  lastPointer={x:e.clientX,y:e.clientY};
-  if(gesture?.kind==='paint')paint(e);
-  else if(gesture?.kind==='pan'){
-    camera={...camera,x:camera.x+e.clientX-gesture.x,y:camera.y+e.clientY-gesture.y};
-    gesture.x=e.clientX;gesture.y=e.clientY;
-  }
-  render();
-});
-canvas.addEventListener('pointerleave',()=>{lastPointer=null;render();});
-canvas.addEventListener('pointerup',e=>{
-  if(gesture?.kind==='paint'&&gesture.id===e.pointerId)paint(e);
-  endGesture(e);
-});
-for(const event of ['pointercancel','lostpointercapture'])canvas.addEventListener(event,endGesture);
-window.addEventListener('blur',()=>{endGesture();lastPointer=null;render();});
-canvas.addEventListener('wheel',e=>{
-  e.preventDefault();if(!camera||gesture||menu.open)return;
-  const rect=canvas.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?height:1);
-  lastPointer={x:e.clientX,y:e.clientY};
-  camera=zoomAt(camera,e.clientX-rect.left,e.clientY-rect.top,Math.exp(-delta*.001));render();
-},{passive:false});
-bindCameraKeyboard({
-  move(dx,dy){if(camera&&!gesture&&!menu.open){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
-  reset(){if(!menu.open)reset();}
-});
-mountDrawer(document.querySelector('#drawer'),next=>{
-  endGesture();tool=next;canvas.dataset.tool=tool.mode;stats();render();
-});
-document.querySelector('#reset').addEventListener('click',()=>{reset();canvas.focus({preventScroll:true});});
-document.querySelector('#menu').addEventListener('click',()=>{endGesture();menu.showModal();render();});
-document.querySelector('#resume').addEventListener('click',()=>menu.close());
-menu.addEventListener('close',()=>{canvas.focus({preventScroll:true});render();});
-new ResizeObserver(resize).observe(canvas);
-resize();
+document.querySelector('#form-cancel').addEventListener('click',()=>formDialog.close());
+document.querySelector('#exit-save').addEventListener('click',()=>{if(saveActive())closeScene();});
+document.querySelector('#exit-discard').addEventListener('click',closeScene);
+document.querySelector('#exit-cancel').addEventListener('click',()=>exitDialog.close());
+exitDialog.addEventListener('close',()=>{if(active&&!document.querySelector('#map-screen').hidden)document.querySelector('#world').focus({preventScroll:true});});
+renderNav('home');
