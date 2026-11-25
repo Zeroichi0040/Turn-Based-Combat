@@ -33,7 +33,10 @@ test('gameplay does not mutate editor maps and fresh sessions reset turns',()=>{
 test('selection highlights reachable cells, commits legal moves and rejects invalid ones',()=>{
  const {session,id}=setup();const first=selectTile(session,null,4,4);
  assert.deepEqual(first.selection,{kind:'unit',id});assert.equal(selectionOverlay(session,first.selection).reachable.size,12);
- assert.equal(selectTile(session,first.selection,7,4).selection,first.selection);
+ const rejected=selectTile(session,first.selection,7,4);
+ assert.equal(rejected.selection,null);assert.equal(selectionOverlay(session,rejected.selection),null);
+ assert.equal(session.units.get(id).spent,false);assert.deepEqual(session.units.get(id).position,{x:4,y:4});
+ assert.equal(selectTile(session,first.selection,-1,4).selection,null);
  assert.equal(selectTile(session,first.selection,5,5).selection,null);assert.equal(session.units.get(id).spent,true);
  const spent=selectTile(session,null,5,5);assert.equal(selectionOverlay(session,spent.selection).reachable.size,0);
 });

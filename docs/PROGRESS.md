@@ -18,7 +18,7 @@ Implemented Start/Edit navigation, named map creation (blank names use unused Ne
 Implemented independent runtime sessions, stable entity IDs, Swordsman selection and legal destination highlights, cardinal BFS pathfinding through occupied grass, one movement per turn, spent sprite shading, end-turn confirmation and turn counter. Building inspection is available; entry/garrison menus are deferred to milestone 5. No runtime saves. Added seven gameplay unit tests and two Playwright workflows; CI passed and owner approved PR #4, merged.
 
 ## Milestone 5 — garrison system
-Implemented shared capacity-aware entry, deployment and direct transfer; stored unit IDs and null map positions; counts visible on buildings, 2 Barracks slots and 4 Town Hall slots, inspect/select-again, spent shading and cancellation without mutation. Full buildings remain traversable. Production slot and training are deferred to milestone 6. Seven new logic tests and two browser workflows; verification pending.
+Implemented shared capacity-aware entry, deployment and direct transfer; stored unit IDs and null map positions; counts visible on buildings, 2 Barracks slots and 4 Town Hall slots, inspect/select-again, spent shading and cancellation without mutation. Full buildings remain traversable. Production slot and training are deferred to milestone 6. Seven new logic tests and two browser workflows; initial garrison CI passed. Owner requested deselection on unreachable empty tiles and hidden zero-count map badges; implemented with updated selection tests and a new badge browser regression. Latest CI pending.
 
 ## Next
 6. Production: recurring orders, capacity pause, cancel.

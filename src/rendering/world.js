@@ -30,7 +30,7 @@ export function drawWorld(ctx,width,height,camera,grass,occupants=[],cursor=null
   for(const k of grass){const p=point(k);draw('grass',p.x,p.y);}
   for(const k of overlay?.reachable??[]){const p=point(k);highlight(p.x,p.y,'#dfd77555','#d8d77b');}
   const counts=[];
-  for(const o of occupants){draw(o.sprite,o.x,o.y,o.spent);if(Number.isInteger(o.garrisonCount))counts.push(o);}
+  for(const o of occupants){draw(o.sprite,o.x,o.y,o.spent);if(Number.isInteger(o.garrisonCount)&&o.garrisonCount>0)counts.push(o);}
   if(overlay?.deployment){const d=overlay.deployment;draw(d.sprite,d.x,d.y);}
   // Count badges are drawn last so a deployment preview never obscures them.
   for(const o of counts){

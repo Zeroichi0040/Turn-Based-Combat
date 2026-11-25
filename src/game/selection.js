@@ -16,12 +16,9 @@ export function selectTile(session,selection,x,y){
     if(unit&&!unit.spent&&target?.kind==='building'&&!hasGarrisonSpace(target.entity))
       return {selection,message:'Garrison is full.'};
     // A failed deployment leaves the stored unit in place and exits deployment
-    // when another entity is selected; unreachable empty cells retain selection.
+    // when another entity is selected or an unreachable empty cell is clicked.
   }
   if(!target){
-    if(selection?.kind==='unit'&&!session.units.get(selection.id)?.spent){
-      return {selection,message:'That tile is not reachable.'};
-    }
     return {selection:null,message:'Select a unit to move.'};
   }
   const {kind,entity}=target;

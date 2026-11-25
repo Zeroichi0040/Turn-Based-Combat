@@ -39,6 +39,8 @@ test('deployment selection is only a projection and cancelling preserves members
   const selected={kind:'unit',id:a.id},overlay=selectionOverlay(s,selected);
   assert.deepEqual(overlay.deployment,{x:4,y:4,sprite:'swordsman'});assert.ok(overlay.reachable.has('3,4'));
   assert.equal(a.position,null);assert.deepEqual(b.garrison,[a.id]);
+  assert.equal(selectTile(s,selected,9,9).selection,null);
+  assert.deepEqual(b.garrison,[a.id]);assert.equal(a.spent,false);
   assert.equal(selectTile(s,selected,4,4).selection,null);assert.equal(selectionOverlay(s,null),null);
   assert.deepEqual(b.garrison,[a.id]);assert.equal(a.spent,false);
 });
