@@ -132,7 +132,14 @@ dialog{width:var(--modal-width);min-width:0;height:224px;max-height:90vh;overflo
 dialog[open]{display:flex;flex-direction:column}
 dialog .modal-actions{margin-top:auto;padding-top:16px;flex:none}
 #map-form{display:flex;flex:1;flex-direction:column;min-height:0}
-#garrison-dialog{width:540px;min-width:0;height:320px}
+#garrison-dialog{width:540px;min-width:0;height:360px}
+/* Reserve room for the production state and footer, including the full/spent states.
+   Keep overflow auto as a safety net for unusually short viewports. */
+#garrison-dialog .building-slots{min-height:132px}
+#garrison-dialog #garrison-status{flex:none;min-height:18px}
+#garrison-dialog .production-panel{flex:none;width:180px}
+#garrison-dialog .production-controls{gap:6px}
+#garrison-dialog #production-state{white-space:normal;overflow-wrap:break-word}
 #production-dialog{width:300px;min-width:0;height:248px}
 .garrison-slot,.production-slot{width:var(--slot-size);height:var(--slot-size);flex:none}
 .training-choice{width:96px;height:104px}

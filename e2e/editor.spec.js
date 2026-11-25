@@ -44,19 +44,40 @@ test('editor modal resumes without losing edits',async({page})=>{
 
 test('drawer overlays the canvas without changing its size or position',async({page})=>{
   const world=page.locator('#world');
+  const reset=page.getByRole('button',{name:'Reset camera'});
+  await reset.click();
+  // Let the initial ResizeObserver settle before measuring.
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const original=await world.boundingBox();
-  await page.getByRole('button',{name:'Reset camera'}).hover();
-  await expect(page.locator('#coordinate')).toHaveText('—');
-  const pixels=await world.evaluate(canvas=>canvas.toDataURL());
+  // Record the actual grass draw destinations. This checks camera geometry,
+  // independently of transient cursor outlines and canvas PNG encoding.
+  await world.evaluate(canvas=>{
+    const ctx=canvas.getContext('2d'),draw=ctx.drawImage.bind(ctx),clear=ctx.fillRect.bind(ctx);
+    window.__terrainDraws=[];
+    ctx.fillRect=(x,y,w,h)=>{
+      if(x===0&&y===0&&w>100&&h>100)window.__terrainDraws=[];
+      return clear(x,y,w,h);
+    };
+    ctx.drawImage=(image,...args)=>{
+      window.__terrainDraws.push(args);
+      return draw(image,...args);
+    };
+  });
+  // Move away from the reset position so a hidden camera reset also fails.
+  const x=original.x+original.width/2,y=original.y+original.height/2;
+  await page.mouse.move(x,y);await page.mouse.down({button:'right'});
+  await page.mouse.move(x+20,y+36);await page.mouse.up({button:'right'});
+  await reset.hover();
+  const draws=()=>page.evaluate(()=>window.__terrainDraws);
+  const before=await draws();expect(before).toHaveLength(100);
   await page.getByRole('button',{name:'Close drawer'}).click();
   await expect(page.locator('#drawer-panel')).toBeHidden();
   expect(await world.boundingBox()).toEqual(original);
+  expect(await draws()).toEqual(before);
   await page.getByRole('button',{name:'Tiles',exact:true}).click();
   await expect(page.locator('#drawer-panel')).toBeVisible();
   expect(await world.boundingBox()).toEqual(original);
-  await page.getByRole('button',{name:'Reset camera'}).hover();
-  await expect(page.locator('#coordinate')).toHaveText('—');
-  expect(await world.evaluate(canvas=>canvas.toDataURL())===pixels).toBe(true);
+  expect(await draws()).toEqual(before);
 });
 test('drag eraser removes another layer only on re-entry',async({page})=>{
   await page.getByRole('button',{name:'Units'}).click();

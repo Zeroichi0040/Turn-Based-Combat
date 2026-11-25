@@ -10,3 +10,5 @@ Reference direction: classic tile-based medieval strategy, not a modern web dash
 - Visual review at default zoom, minimum and maximum zoom, smaller desktop window, editor and gameplay, empty/full garrisons, training/paused state and stacked dialogs before signoff.
 
 Second pass: stable button dimensions per role, fixed modal dimensions per content class, wider overlay drawer, no redundant helper copy. Preserve essential warnings and state indicators. White route arrow previews a move until the destination is clicked again; newly completed Barracks units are represented on top of the building until inspected or moved.
+
+Building dialogs use a fixed 540×360 desktop footprint with reserved production-state and footer space. Scroll only as a fallback in unusually constrained viewports.

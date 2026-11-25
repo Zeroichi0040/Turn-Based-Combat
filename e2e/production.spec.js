@@ -74,3 +74,24 @@ test('completed unit can be selected and deployed directly from barracks tile',a
  await tile(page,3,4);await expect(page.locator('#status')).toContainText('Swordsman moved');
  await openBuilding(page,4,'Barracks');await expect(page.locator('#garrison-count')).toHaveText('0 / 2 garrisoned');
 });
+
+async function assertNoOverflow(page){
+  const dialog=page.locator('#garrison-dialog');
+  const metrics=await dialog.evaluate(el=>({
+    width:el.clientWidth,height:el.clientHeight,
+    scrollWidth:el.scrollWidth,scrollHeight:el.scrollHeight,
+    outerWidth:el.offsetWidth,outerHeight:el.offsetHeight,
+  }));
+  expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.width);
+  expect(metrics.scrollHeight).toBeLessThanOrEqual(metrics.height);
+  await expect(dialog.getByRole('button',{name:'Close',exact:true})).toBeInViewport();
+  return [metrics.outerWidth,metrics.outerHeight];
+}
+test('building dialogs fit content and retain size across training states',async({page})=>{
+  await openBuilding(page,4,'Barracks');const size=await assertNoOverflow(page);
+  await order(page);expect(await assertNoOverflow(page)).toEqual(size);await closeBuilding(page);
+  await turn(page);await turn(page);await openBuilding(page,4,'Barracks');
+  await expect(page.locator('#production-state')).toHaveText('Paused — garrison full');
+  expect(await assertNoOverflow(page)).toEqual(size);await closeBuilding(page);
+  await openBuilding(page,6,'Town Hall');expect(await assertNoOverflow(page)).toEqual(size);
+});
