@@ -22,4 +22,4 @@
 - CI uses Chromium. Other browsers and hardware require separate manual testing.
 - No lockfile is committed yet; dependency resolution is not fully reproducible. Generate and verify a lockfile in a network-enabled checkout before distribution if required.
 
-Version remains 0.1.0 until the owner approves the release. Do not merge or tag without approval.
+Version 0.1.0 approved by the owner. Release-hardening PR CI passed 71 unit tests, 19 Chromium browser tests and production build. The one-time initial release workflow only runs for the merged PR #8, verifies the merged commit, and publishes v0.1.0. Future releases require owner approval.
