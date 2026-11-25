@@ -18,7 +18,7 @@ export function centerCamera(width,height,tiles=10){
  * On a small map the entire envelope may fit; then center that axis.
  * Padding is in world tiles, not screen pixels.
  */
-export const CAMERA_PADDING_TILES = 3;
+export const CAMERA_PADDING_TILES = 7;
 export function clampCamera(camera,width,height,bounds,paddingTiles=CAMERA_PADDING_TILES) {
   if (!bounds) return camera;
   const scale=TILE_SIZE*camera.zoom;

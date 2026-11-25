@@ -17,18 +17,25 @@ export function* strokeCells(from,to) {
   }
 }
 
-/** Each coordinate is attempted once per pointer stroke, even if revisited. */
+/** Placement attempts each cell once per stroke. Erase removes one layer on
+ * each entry into a cell, including re-entry, but never repeatedly while hovering.
+ */
 export function createStroke(map,tool) {
   const visited=new Set();
   const selected={...tool};
   let previous=null;
   return {
+    breakPath() { previous=null; },
     visit(tile) {
       let changed=false,last=null;
       for (const p of strokeCells(previous??tile,tile)) {
         const k=key(p.x,p.y);
-        if (visited.has(k)) continue;
-        visited.add(k);
+        // The starting cell was already handled by the previous pointer sample.
+        if (previous && p.x===previous.x && p.y===previous.y) continue;
+        if (selected.mode!=='erase') {
+          if (visited.has(k)) continue;
+          visited.add(k);
+        }
         last=applyEdit(map,selected,p.x,p.y);
         changed ||= last.changed;
       }

@@ -31,11 +31,27 @@ test('disconnecting terrain and deleting last grass tile are rejected atomically
   assert.ok(m.grass.has('10,0'));assert.ok(m.grass.has('11,0'));
   m.grass=new Set(['0,0']);assert.equal(applyEdit(m,erase,0,0).changed,false);
 });
-test('erase stroke revisits do not remove terrain under an erased unit',()=>{
+test('eraser removes one layer per entry and does not repeat while stationary',()=>{
   const m=createEditorMap();applyEdit(m,unit,0,0);
-  const stroke=createStroke(m,erase);stroke.visit({x:0,y:0});stroke.visit({x:1,y:0});stroke.visit({x:0,y:0});
+  const stroke=createStroke(m,erase);
+  stroke.visit({x:0,y:0});stroke.visit({x:0,y:0});
   assert.ok(m.grass.has('0,0'));assert.ok(!m.occupants.has('0,0'));
-  createStroke(m,erase).visit({x:0,y:0});assert.ok(!m.grass.has('0,0'));
+  stroke.visit({x:1,y:0});stroke.visit({x:0,y:0});
+  assert.ok(!m.grass.has('0,0'));assert.ok(!m.grass.has('1,0'));
+});
+test('fast erase return pass removes terrain below occupants but keeps connectivity',()=>{
+  const m=createEditorMap();
+  for(let x=0;x<4;x++)applyEdit(m,unit,x,0);
+  const stroke=createStroke(m,erase);
+  stroke.visit({x:0,y:0});stroke.visit({x:3,y:0});
+  assert.equal(m.occupants.size,0);assert.equal(m.grass.size,100);
+  stroke.visit({x:0,y:0});
+  assert.equal(m.grass.size,97);assert.ok(m.grass.has('3,0'));
+});
+test('breaking a stroke path prevents interpolation across an obstructed area',()=>{
+  const m=createEditorMap(),stroke=createStroke(m,erase);
+  stroke.visit({x:0,y:0});stroke.breakPath();stroke.visit({x:4,y:0});
+  assert.equal(m.grass.size,98);assert.ok(m.grass.has('2,0'));
 });
 test('fast painting fills cardinal path between event samples',()=>{
   const m=createEditorMap();const stroke=createStroke(m,grass);

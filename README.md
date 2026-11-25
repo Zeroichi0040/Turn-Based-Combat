@@ -13,7 +13,7 @@ npm test
 npm run build
 ```
 
-The editor opens a blank 10×10 grass map. Choose an asset in the left drawer, then click or drag on the map. Erase removes the occupant first, and grass on a later stroke. Hold WASD or arrow keys for smooth panning, or middle/right mouse drag; scroll to zoom; Home resets the camera. Save and Exit are disabled until map management is implemented; edits are not persistent yet.
+The editor opens a blank 10×10 grass map. Choose an asset in the overlay left drawer, then click or drag on the map. Erase removes the occupant first, and grass when you leave and re-enter that tile or start another stroke. Hold WASD or arrow keys for smooth panning, or middle/right mouse drag; scroll to zoom; Home resets the camera. Save and Exit are disabled until map management is implemented; edits are not persistent yet.
 
 ## Development
 

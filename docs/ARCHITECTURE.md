@@ -10,8 +10,8 @@ Current modules:
 - src/rendering/sprites.js: generated pixel sprites cached by ID.
 - src/rendering/world.js: draw visible terrain and occupants, never mutate map.
 - src/editor/map.js: authoritative editor map and validated placement/erase commands; runtime occupants keyed by coordinate.
-- src/editor/stroke.js: cardinal interpolation and per-stroke deduplication; tool frozen at stroke start.
-- src/ui/editor-drawer.js: sprite-based category rail and tool controls.
+- src/editor/stroke.js: cardinal interpolation, placement deduplication and one-layer-per-entry erasure; tool frozen at stroke start. Break interpolation over overlays.
+- src/ui/editor-drawer.js: sprite-based category rail and tool controls; drawer overlays a fixed-size viewport.
 - src/main.js: editor wiring, pointer gestures and camera; freezes camera during painting, clamps after stroke.
 - src/styles.css: visual presentation.
 

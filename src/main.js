@@ -51,7 +51,11 @@ function endGesture(event) {
 function paint(event) {
   const rect=canvas.getBoundingClientRect();
   // Captured pointer events outside the canvas must not edit invisible cells.
-  if(event.clientX<rect.left||event.clientX>=rect.right||event.clientY<rect.top||event.clientY>=rect.bottom)return;
+  if(event.clientX<rect.left||event.clientX>=rect.right||event.clientY<rect.top||event.clientY>=rect.bottom||
+    document.elementFromPoint(event.clientX,event.clientY)?.closest('#drawer')) {
+    gesture.stroke.breakPath();
+    return;
+  }
   const result=gesture.stroke.visit(tileAt(event.clientX,event.clientY));
   if(result.last)status.textContent=result.last.message;
   if(result.changed)stats();

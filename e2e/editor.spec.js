@@ -41,3 +41,29 @@ test('editor modal resumes without losing edits and persistence is explicitly de
   await dialog.getByRole('button',{name:'Resume'}).click();await expect(dialog).toBeHidden();
   await expect(page.locator('#map-stats')).toHaveText('100 grass · 1 occupants');
 });
+
+test('drawer overlays the canvas without changing its size or position',async({page})=>{
+  const world=page.locator('#world');
+  const original=await world.boundingBox();
+  const pixels=await world.evaluate(canvas=>canvas.toDataURL());
+  await page.getByRole('button',{name:'Close drawer'}).click();
+  await expect(page.locator('#drawer-panel')).toBeHidden();
+  expect(await world.boundingBox()).toEqual(original);
+  await page.getByRole('button',{name:'Tiles',exact:true}).click();
+  await expect(page.locator('#drawer-panel')).toBeVisible();
+  expect(await world.boundingBox()).toEqual(original);
+  expect(await world.evaluate(canvas=>canvas.toDataURL())).toEqual(pixels);
+});
+test('drag eraser removes another layer only on re-entry',async({page})=>{
+  await page.getByRole('button',{name:'Units'}).click();
+  await clickTile(page,4,0);
+  await page.getByRole('button',{name:'Erase',exact:true}).click();
+  const a=await tile(page,4,0);
+  const b={x:a.x+32*centerCameraOnBounds((await page.locator('#world').boundingBox()).width,(await page.locator('#world').boundingBox()).height,initial).zoom,y:a.y};
+  await page.mouse.move(a.x,a.y);await page.mouse.down();
+  await page.mouse.move(a.x+2,a.y);
+  await expect(page.locator('#map-stats')).toHaveText('100 grass · 0 occupants');
+  await page.mouse.move(b.x,b.y);await page.mouse.move(a.x,a.y);
+  await page.mouse.up();
+  await expect(page.locator('#map-stats')).toHaveText('98 grass · 0 occupants');
+});
