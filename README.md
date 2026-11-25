@@ -2,4 +2,24 @@
 
 A desktop-first, turn-based strategy sandbox and scenario editor inspired by classic tile-based strategy games.
 
-The project is being developed incrementally. See [AGENTS.md](AGENTS.md), [game rules](docs/GAME_RULES.md), and [progress](docs/PROGRESS.md) for the design and implementation status once the foundation is in place.
+## Run locally
+
+Requires Node.js 22.12+.
+
+```sh
+npm install
+npm run dev
+npm test
+npm run build
+```
+
+The initial foundation opens a 10×10 terrain preview with sample buildings and a Swordsman. Pan with WASD, arrow keys, or middle/right mouse drag; zoom with the mouse wheel; press Home to reset the camera. This is a renderer preview, not yet the map editor or gameplay.
+
+## Development
+
+- [AGENTS.md](AGENTS.md): agent workflow and conventions
+- [Game rules](docs/GAME_RULES.md): agreed behavior
+- [Architecture](docs/ARCHITECTURE.md): module responsibilities
+- [Progress](docs/PROGRESS.md): milestone tracking
+
+Use feature branches and pull requests after the initial foundation. Do not merge without owner approval.

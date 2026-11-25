@@ -1,0 +1,24 @@
+# Approved game rules
+
+## Scope
+Single-player sandbox; no enemies, combat, resources, AI, victory conditions, multiplayer, mobile controls or gameplay saves in v1. Desktop first.
+
+## Navigation and persistence
+Launch: Start and Edit rectangular buttons. Start opens saved map selection; each play session starts fresh from a copy of its map. Edit opens map management with create, edit, rename and delete. New map opens a naming modal; blank name becomes New Map n (use an unused number). New maps start with 10×10 grass, no occupants. Confirm deletions. Editor menu (top right hamburger) opens a centered modal with horizontally arranged Resume, Save, Exit. Unsaved exit prompts Save, Discard, Cancel. Save maps only. In gameplay, hamburger opens Continue and Exit; arrow immediately to its left opens an End Turn? confirmation with End Turn button. Menus must have a usable dismissal path.
+
+## Terrain and editor
+Grass and black empty space; sparse integer coordinates, no artificial map-size cap. Grass may be added only cardinally adjacent to existing grass. Grass removal must not disconnect the remaining landmass; preserve at least one tile. Reject invalid removals without deleting disconnected branches automatically. No units or buildings on empty space. One occupant (unit or building) per terrain cell in the editor. Same-category placement replaces the existing occupant; cross-category placement rejects. Buildings: Town Hall and Barracks. Units: Swordsman.
+Left drawer begins open on Tiles (Grass). Attached right-side sprite tabs: Grass/Tiles, Town Hall/Buildings, Swordsman/Units; back button above them closes drawer, category tabs reopen it. Place and universal Erase tools. Erase removes topmost unit, then building, then terrain, one layer per action; while dragging visit each tile at most once per stroke. Support drag painting/erasing. Mouse and keyboard camera pan; wheel zoom. Empty space is black.
+
+## Turns and movement
+Turn starts with all units ready, including newly produced ones. One movement action per unit per turn, even for a one-tile move. Swordsman movement budget 2 cardinal steps, so one diagonal offset is reachable by two cardinal steps if a valid route exists. Use pathfinding, not teleportation; no stepping on empty terrain. Occupied terrain can be traversed (units and buildings, even full garrisons), but not used as a destination except entering a building with available garrison capacity. A moved unit is darkened until next turn. No movement costs beyond distance yet. Highlight valid destinations. Click a unit to select; click an already selected object again without a timing window for secondary actions.
+
+## Buildings and garrisons
+Town Hall capacity 4, no production. Barracks capacity 2, one production order. All buildings accept outside units if capacity permits and may be traversed even when full. Entering consumes the unit's movement action, transfers it to the garrison, and darkens its stored sprite. Units can transfer directly between buildings in range with capacity. Each unit has one authoritative location (map or garrison), never both.
+Show garrison count on buildings regardless of selection; no representative unit sprite by default (supersedes earlier spawn-on-top idea). First click highlights building, second opens centered menu. Town Hall has four internal slots; Barracks has two centered internal slots and a production slot to the right. First click a stored unit highlights/inspects it; second click on a ready unit closes menu, overlays its sprite on the building and shows valid moves. A spent unit can be inspected but second click does nothing. Unit remains garrisoned until movement commits; cancelling selection hides overlay and returns to unselected map view. A full destination rejects entry without consuming movement.
+
+## Production
+First click production slot highlights; second opens smaller modal over building menu listing available units. First click Swordsman highlights; second assigns order and returns to building menu showing Swordsman in right slot. Dedicated Cancel button beside production slot. Training takes one turn: at start of next turn, unit enters garrison and is immediately ready. Order repeats until cancelled or capacity full. When full, darken production sprite and pause; when space opens, resume automatically, finishing next unit at start of next turn. No hidden overflow or separate spawned map occupant.
+
+## Art
+All sprites generated in code at native 32×32, crisp nearest-neighbor scaling. Restrained medieval strategy UI, coherent palettes, distinct silhouettes.
