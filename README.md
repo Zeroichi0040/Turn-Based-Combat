@@ -13,7 +13,7 @@ npm test
 npm run build
 ```
 
-The initial foundation opens a 10×10 terrain preview with sample buildings and a Swordsman. Pan with WASD, arrow keys, or middle/right mouse drag; zoom with the mouse wheel; press Home to reset the camera. This is a renderer preview, not yet the map editor or gameplay.
+The initial foundation opens a 10×10 terrain preview with sample buildings and a Swordsman. Hold WASD or arrow keys for smooth camera panning (combine directions for diagonal motion; latest opposing key wins), or use middle/right mouse drag; zoom with the mouse wheel; press Home to reset the camera. This is a renderer preview, not yet the map editor or gameplay.
 
 ## Development
 

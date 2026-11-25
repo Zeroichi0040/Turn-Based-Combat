@@ -13,3 +13,21 @@ export function centerCamera(width,height,tiles=10){
   const zoom=Math.max(MIN_ZOOM,Math.min(2,Math.floor(Math.min(width,height)*.8/(tiles*TILE_SIZE)*4)/4));
   return {zoom,x:(width-tiles*TILE_SIZE*zoom)/2,y:(height-tiles*TILE_SIZE*zoom)/2};
 }
+
+/** Keep the view within the terrain envelope while allowing edge expansion.
+ * On a small map the entire envelope may fit; then center that axis.
+ * Padding is in world tiles, not screen pixels.
+ */
+export const CAMERA_PADDING_TILES = 3;
+export function clampCamera(camera,width,height,bounds,paddingTiles=CAMERA_PADDING_TILES) {
+  if (!bounds) return camera;
+  const scale=TILE_SIZE*camera.zoom;
+  function axis(offset,viewport,min,max) {
+    const start=(min-paddingTiles)*scale;
+    const end=(max+1+paddingTiles)*scale;
+    if (end-start<=viewport) return (viewport-start-end)/2;
+    return Math.max(viewport-end,Math.min(-start,offset));
+  }
+  return {...camera,x:axis(camera.x,width,bounds.minX,bounds.maxX),
+    y:axis(camera.y,height,bounds.minY,bounds.maxY)};
+}

@@ -1,12 +1,14 @@
 import './styles.css';
-import {newTerrain} from './core/grid.js';
-import {centerCamera,zoomAt} from './rendering/camera.js';
+import {newTerrain,terrainBounds} from './core/grid.js';
+import {centerCamera,zoomAt,clampCamera} from './rendering/camera.js';
 import {drawWorld} from './rendering/world.js';
+import {bindCameraKeyboard} from './rendering/keyboard-pan.js';
 const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
 const grass=newTerrain();
+const bounds=terrainBounds(grass);
 const sample=[{sprite:'townHall',x:2,y:3},{sprite:'barracks',x:5,y:3},{sprite:'swordsman',x:4,y:6}];
 let camera=null,width=0,height=0,ratio=1,drag=null;
-function render(){ctx.setTransform(ratio,0,0,ratio,0,0);drawWorld(ctx,width,height,camera,grass,sample);}
+function render(){camera=clampCamera(camera,width,height,bounds);ctx.setTransform(ratio,0,0,ratio,0,0);drawWorld(ctx,width,height,camera,grass,sample);}
 function reset(){camera=centerCamera(width,height);render();}
 function resize(){
   const rect=canvas.getBoundingClientRect(),oldW=width,oldH=height;
@@ -33,11 +35,9 @@ canvas.addEventListener('wheel',e=>{
   const rect=canvas.getBoundingClientRect();const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?height:1);
   camera=zoomAt(camera,e.clientX-rect.left,e.clientY-rect.top,Math.exp(-delta*.001));render();
 },{passive:false});
-window.addEventListener('keydown',e=>{
-  if(!camera||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName))return;
-  const step=32,dir={w:[0,step],arrowup:[0,step],s:[0,-step],arrowdown:[0,-step],a:[step,0],arrowleft:[step,0],d:[-step,0],arrowright:[-step,0]}[e.key.toLowerCase()];
-  if(e.key==='Home'){e.preventDefault();reset();return;}
-  if(dir){e.preventDefault();camera={...camera,x:camera.x+dir[0],y:camera.y+dir[1]};render();}
+bindCameraKeyboard({
+  move(dx,dy){if(camera){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
+  reset(){if(camera)reset();}
 });
 document.querySelector('#reset').addEventListener('click',e=>{reset();e.currentTarget.blur();});
 resize();
