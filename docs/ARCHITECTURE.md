@@ -13,10 +13,12 @@ Current modules:
 - src/editor/stroke.js: cardinal interpolation, placement deduplication and one-layer-per-entry erasure; tool frozen at stroke start. Break interpolation over overlays.
 - src/ui/editor-drawer.js: sprite-based category rail and tool controls; drawer overlays a fixed-size viewport.
 - src/storage/map-store.js: versioned local storage, strict validation, serialization/hydration and map CRUD; no DOM.
-- src/ui/map-scene.js: reusable editor/read-only preview wiring, pointer gestures and camera; freezes camera during painting, clamps after stroke.
+- src/ui/map-scene.js: reusable editor/gameplay wiring, pointer gestures and camera; freezes camera during painting, clamps after stroke.
+- src/game/session.js: independent runtime entity state, BFS reachable destinations, validated movement and turn advancement.
+- src/game/selection.js: transient selection transitions and renderer overlay projection.
 - src/main.js: navigation, modal actions, dirty revision tracking and map persistence coordination.
 - src/styles.css: visual presentation.
 
-Next modules (create as needed): game/ for turn/selection/garrison/production rules; ui/ for menus and dialogs.
+Next modules (create as needed): game/ for garrison/production rules; ui/ for menus and dialogs.
 
 Authoritative maps should contain terrain and editor occupants only; active sessions are separate copies with runtime unit IDs and state. Use plain serializable data for persistence and sparse sets/maps at runtime. Every future mutation should pass through a rule function that validates before committing; avoid duplicated validation in UI. UI selection and camera state are transient. Cache terrain bounds and refresh them after terrain edits; clamp all camera changes before drawing. Use a viewport transform rather than a world-sized canvas. Culling must not require allocating the entire coordinate bounds.
