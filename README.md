@@ -13,7 +13,7 @@ npm test
 npm run build
 ```
 
-The editor opens a blank 10×10 grass map. Choose an asset in the overlay left drawer, then click or drag on the map. Erase removes the occupant first, and grass when you leave and re-enter that tile or start another stroke. Hold WASD or arrow keys for smooth panning, or middle/right mouse drag; scroll to zoom; Home resets the camera. Save and Exit are disabled until map management is implemented; edits are not persistent yet.
+Choose Edit to create, rename, delete or edit maps. New maps start with 10×10 grass. Use the overlay drawer to place or erase assets; re-enter a tile while erasing to remove its next layer. Save via the top-right menu; maps persist in this browser and origin. Start opens a read-only preview of a saved map, using a separate working copy. Gameplay arrives in milestone 4. Hold WASD or arrow keys to pan, middle/right drag to pan, scroll to zoom and Home to reset.
 
 ## Development
 
