@@ -1,43 +1,113 @@
 import './styles.css';
-import {newTerrain,terrainBounds} from './core/grid.js';
-import {centerCamera,zoomAt,clampCamera} from './rendering/camera.js';
+import {createEditorMap,renderOccupants} from './editor/map.js';
+import {createStroke} from './editor/stroke.js';
+import {centerCameraOnBounds,zoomAt,clampCamera,screenToTile} from './rendering/camera.js';
 import {drawWorld} from './rendering/world.js';
 import {bindCameraKeyboard} from './rendering/keyboard-pan.js';
+import {mountDrawer} from './ui/editor-drawer.js';
+
 const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
-const grass=newTerrain();
-const bounds=terrainBounds(grass);
-const sample=[{sprite:'townHall',x:2,y:3},{sprite:'barracks',x:5,y:3},{sprite:'swordsman',x:4,y:6}];
-let camera=null,width=0,height=0,ratio=1,drag=null;
-function render(){camera=clampCamera(camera,width,height,bounds);ctx.setTransform(ratio,0,0,ratio,0,0);drawWorld(ctx,width,height,camera,grass,sample);}
-function reset(){camera=centerCamera(width,height);render();}
-function resize(){
+const status=document.querySelector('#status'),coordinate=document.querySelector('#coordinate');
+const menu=document.querySelector('#editor-menu');
+const map=createEditorMap();
+let camera=null,width=0,height=0,ratio=1,gesture=null,hover=null;
+let tool={mode:'place',category:'tiles',id:'grass'};
+let lastPointer=null;
+function stats() {
+  const el=document.querySelector('#map-stats');
+  if(el)el.textContent=map.grass.size+' grass · '+map.occupants.size+' occupants';
+}
+function tileAt(clientX,clientY) {
+  const rect=canvas.getBoundingClientRect();
+  return screenToTile(camera,clientX-rect.left,clientY-rect.top);
+}
+function render() {
+  if(!camera)return;
+  // Freeze camera transform while painting; clamp to updated bounds at stroke end.
+  if(gesture?.kind!=='paint')camera=clampCamera(camera,width,height,map.bounds);
+  if(lastPointer) {
+    hover=tileAt(lastPointer.x,lastPointer.y);
+    coordinate.textContent=hover.x+', '+hover.y;
+  } else {hover=null;coordinate.textContent='—';}
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  drawWorld(ctx,width,height,camera,map.grass,renderOccupants(map),hover&&!menu.open?{...hover,mode:tool.mode}:null);
+}
+function reset() {if(gesture)return;camera=centerCameraOnBounds(width,height,map.bounds);render();}
+function resize() {
+  if(gesture)endGesture();
   const rect=canvas.getBoundingClientRect(),oldW=width,oldH=height;
   width=rect.width;height=rect.height;ratio=window.devicePixelRatio||1;
   canvas.width=Math.max(1,Math.round(width*ratio));canvas.height=Math.max(1,Math.round(height*ratio));
   if(!camera){reset();return;}
   camera={...camera,x:camera.x+(width-oldW)/2,y:camera.y+(height-oldH)/2};render();
 }
-new ResizeObserver(resize).observe(canvas);
+function endGesture(event) {
+  if(!gesture||(event?.pointerId!=null&&event.pointerId!==gesture.id))return;
+  const id=gesture.id;gesture=null;
+  canvas.classList.remove('dragging');
+  if(canvas.hasPointerCapture(id))canvas.releasePointerCapture(id);
+  render();
+}
+function paint(event) {
+  const rect=canvas.getBoundingClientRect();
+  // Captured pointer events outside the canvas must not edit invisible cells.
+  if(event.clientX<rect.left||event.clientX>=rect.right||event.clientY<rect.top||event.clientY>=rect.bottom||
+    document.elementFromPoint(event.clientX,event.clientY)?.closest('#drawer')) {
+    gesture.stroke.breakPath();
+    return;
+  }
+  const result=gesture.stroke.visit(tileAt(event.clientX,event.clientY));
+  if(result.last)status.textContent=result.last.message;
+  if(result.changed)stats();
+}
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',e=>{
-  if(e.button!==1&&e.button!==2)return;e.preventDefault();canvas.setPointerCapture(e.pointerId);
-  drag={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.classList.add('dragging');
+  if(menu.open||gesture||!camera||![0,1,2].includes(e.button))return;
+  e.preventDefault();canvas.focus({preventScroll:true});
+  lastPointer={x:e.clientX,y:e.clientY};
+  canvas.setPointerCapture(e.pointerId);
+  if(e.button===0) {
+    gesture={kind:'paint',id:e.pointerId,stroke:createStroke(map,tool)};
+    paint(e);
+  } else {
+    gesture={kind:'pan',id:e.pointerId,x:e.clientX,y:e.clientY};
+    canvas.classList.add('dragging');
+  }
+  render();
 });
 canvas.addEventListener('pointermove',e=>{
-  if(!drag||drag.id!==e.pointerId)return;
-  camera={...camera,x:camera.x+e.clientX-drag.x,y:camera.y+e.clientY-drag.y};
-  drag.x=e.clientX;drag.y=e.clientY;render();
+  if(!camera||menu.open||(gesture&&gesture.id!==e.pointerId))return;
+  lastPointer={x:e.clientX,y:e.clientY};
+  if(gesture?.kind==='paint')paint(e);
+  else if(gesture?.kind==='pan'){
+    camera={...camera,x:camera.x+e.clientX-gesture.x,y:camera.y+e.clientY-gesture.y};
+    gesture.x=e.clientX;gesture.y=e.clientY;
+  }
+  render();
 });
-function stop(e){if(drag?.id===e.pointerId){drag=null;canvas.classList.remove('dragging');}}
-for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,stop);
+canvas.addEventListener('pointerleave',()=>{lastPointer=null;render();});
+canvas.addEventListener('pointerup',e=>{
+  if(gesture?.kind==='paint'&&gesture.id===e.pointerId)paint(e);
+  endGesture(e);
+});
+for(const event of ['pointercancel','lostpointercapture'])canvas.addEventListener(event,endGesture);
+window.addEventListener('blur',()=>{endGesture();lastPointer=null;render();});
 canvas.addEventListener('wheel',e=>{
-  e.preventDefault();if(!camera)return;
-  const rect=canvas.getBoundingClientRect();const delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?height:1);
+  e.preventDefault();if(!camera||gesture||menu.open)return;
+  const rect=canvas.getBoundingClientRect(),delta=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?height:1);
+  lastPointer={x:e.clientX,y:e.clientY};
   camera=zoomAt(camera,e.clientX-rect.left,e.clientY-rect.top,Math.exp(-delta*.001));render();
 },{passive:false});
 bindCameraKeyboard({
-  move(dx,dy){if(camera){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
-  reset(){if(camera)reset();}
+  move(dx,dy){if(camera&&!gesture&&!menu.open){camera={...camera,x:camera.x+dx,y:camera.y+dy};render();}},
+  reset(){if(!menu.open)reset();}
 });
-document.querySelector('#reset').addEventListener('click',e=>{reset();e.currentTarget.blur();});
+mountDrawer(document.querySelector('#drawer'),next=>{
+  endGesture();tool=next;canvas.dataset.tool=tool.mode;stats();render();
+});
+document.querySelector('#reset').addEventListener('click',()=>{reset();canvas.focus({preventScroll:true});});
+document.querySelector('#menu').addEventListener('click',()=>{endGesture();menu.showModal();render();});
+document.querySelector('#resume').addEventListener('click',()=>menu.close());
+menu.addEventListener('close',()=>{canvas.focus({preventScroll:true});render();});
+new ResizeObserver(resize).observe(canvas);
 resize();

@@ -6,14 +6,17 @@ Implemented in source: project shell, stable content definitions, sparse connect
 Verification: run npm test and npm run build; CI is configured to do so. Browser playtesting and CI results have not yet been recorded here. The sample preview is intentionally not an editor or game session.
 
 ## Foundation follow-up — keyboard navigation
-Owner confirmed the initial foundation works locally. Replaced OS key-repeat panning with frame-clock motion, normalized diagonals, last-pressed priority per axis and focus/blur cleanup. Added regression tests for key state and event integration. Owner confirmed keyboard navigation feels good. Follow-up: clamp camera on pan, zoom, reset and resize to the terrain envelope plus three tiles per side; center axes that fit the viewport. Added five bounds regression tests. CI and browser playtesting of the bounds change remain to be verified.
+Owner confirmed the initial foundation works locally. Replaced OS key-repeat panning with frame-clock motion, normalized diagonals, last-pressed priority per axis and focus/blur cleanup. Added regression tests for key state and event integration. Owner confirmed keyboard navigation feels good. Follow-up: clamp camera on pan, zoom, reset and resize to the terrain envelope plus three tiles per side; center axes that fit the viewport. Added five bounds regression tests. CI passed and the owner confirmed the camera bounds feel good. PR #1 merged.
+
+## Milestone 2 — map editor
+Implemented source: blank 10×10 editor, collapsible sprite category drawer, Place/Erase, validated occupants, cardinal grass expansion and connected erasure, drag interpolation and one placement attempt per cell per stroke, live terrain bounds and hover outline. Editor menu Resume works; Save and Exit are deliberately disabled until map management in milestone 3. Maps are transient in this milestone. Initial editor CI passed. Owner requested seven-tile camera padding, repeated erasure on tile re-entry (not on stationary events), and an overlay drawer. Implemented and updated regression coverage; new CI verification pending.
 
 ## Next
-2. Map editor: actual drawer, placement, universal eraser, drag strokes, validation.
 3. Map management: versioned saves, create/rename/delete, main menu, unsaved exit.
 4. Gameplay: selection, movement/pathfinding, turns and confirmations.
 5. Garrison: building menus, entry, storage, deployment.
 6. Production: recurring orders, capacity pause, cancel.
-7. Release hardening: integration/browser tests, visual polish, performance.
+7. Sprites and UI polish: dedicated art and interface refinement after mechanics.
+8. Release hardening: integration/browser tests, performance, bug fixes.
 
 No combat, economy, enemies or mobile controls in initial scope.

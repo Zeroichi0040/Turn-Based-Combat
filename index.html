@@ -3,11 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Turn-Based Combat — Foundation</title>
+<title>Turn-Based Combat — Map Editor</title>
 </head>
 <body>
-<header><div><h1>Turn-Based Combat</h1><p>Foundation · Terrain preview</p></div><button id="reset" type="button">Reset camera</button></header>
-<main><canvas id="world" aria-label="10 by 10 strategy terrain preview"></canvas><aside>WASD / arrows to pan · Middle or right drag · Scroll to zoom · Home to reset</aside></main>
+<header class="editor-header">
+  <div><h1>Map Editor</h1><p>Turn-Based Combat <span class="header-divider">/</span> Untitled map</p></div>
+  <div class="header-actions"><button id="reset" type="button">Reset camera</button><button id="menu" class="hamburger" type="button" aria-label="Editor menu"><span></span><span></span><span></span></button></div>
+</header>
+<main class="editor-workspace">
+  <div id="drawer" class="drawer"></div>
+  <section class="map-viewport" aria-label="Map workspace">
+    <canvas id="world" tabindex="0" aria-label="Editable map"></canvas>
+    <div class="map-overlay" aria-hidden="true"><span id="coordinate">—</span></div>
+  </section>
+</main>
+<footer><span id="status" role="status">Select an asset and click or drag to edit.</span><span class="controls">WASD / arrows · Middle or right drag · Scroll zoom · Home reset</span></footer>
+<dialog id="editor-menu" aria-labelledby="menu-title">
+  <h2 id="menu-title">Map Editor</h2>
+  <p>Map management and persistence arrive in the next milestone.</p>
+  <div class="modal-actions"><button id="resume" autofocus type="button">Resume</button><button type="button" disabled>Save</button><button type="button" disabled>Exit</button></div>
+</dialog>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>

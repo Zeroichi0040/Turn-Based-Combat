@@ -9,20 +9,20 @@ test('camera centers initial map',()=>{const c=centerCamera(800,600);assert.equa
 import {newTerrain,terrainBounds,key} from '../src/core/grid.js';
 test('camera cannot pan outside padded terrain envelope on either axis',()=>{
   const b=terrainBounds(newTerrain()),c={x:1e6,y:-1e6,zoom:2};
-  assert.deepEqual(clampCamera(c,600,500,b),{x:192,y:-332,zoom:2});
-  assert.deepEqual(clampCamera({...c,x:-1e6,y:1e6},600,500,b),{x:-232,y:192,zoom:2});
+  assert.deepEqual(clampCamera(c,600,500,b),{x:448,y:-588,zoom:2});
+  assert.deepEqual(clampCamera({...c,x:-1e6,y:1e6},600,500,b),{x:-488,y:448,zoom:2});
 });
 test('axes center independently when padded map fits viewport',()=>{
   const b=terrainBounds(newTerrain()),c={x:-999,y:999,zoom:1};
-  assert.deepEqual(clampCamera(c,800,400,b),{x:240,y:96,zoom:1});
-  assert.deepEqual(clampCamera(c,800,600,b),{x:240,y:140,zoom:1});
+  assert.deepEqual(clampCamera(c,800,400,b),{x:240,y:224,zoom:1});
+  assert.deepEqual(clampCamera(c,800,800,b),{x:240,y:240,zoom:1});
 });
 test('bounds track negative-coordinate expansion and subsequent erasure',()=>{
   const g=newTerrain(1);g.add(key(-1,0));g.add(key(-2,0));
-  const c={x:999,y:0,zoom:4};
-  assert.equal(clampCamera(c,300,300,terrainBounds(g)).x,640);
+  const c={x:10000,y:0,zoom:4};
+  assert.equal(clampCamera(c,300,300,terrainBounds(g)).x,1152);
   g.delete(key(-2,0));
-  assert.equal(clampCamera(c,300,300,terrainBounds(g)).x,512);
+  assert.equal(clampCamera(c,300,300,terrainBounds(g)).x,1024);
 });
 test('zoom and resize remain bounded and valid positions are unchanged',()=>{
   const b=terrainBounds(newTerrain()),c={x:-100,y:-100,zoom:2};

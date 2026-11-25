@@ -18,7 +18,7 @@ export function centerCamera(width,height,tiles=10){
  * On a small map the entire envelope may fit; then center that axis.
  * Padding is in world tiles, not screen pixels.
  */
-export const CAMERA_PADDING_TILES = 3;
+export const CAMERA_PADDING_TILES = 7;
 export function clampCamera(camera,width,height,bounds,paddingTiles=CAMERA_PADDING_TILES) {
   if (!bounds) return camera;
   const scale=TILE_SIZE*camera.zoom;
@@ -30,4 +30,13 @@ export function clampCamera(camera,width,height,bounds,paddingTiles=CAMERA_PADDI
   }
   return {...camera,x:axis(camera.x,width,bounds.minX,bounds.maxX),
     y:axis(camera.y,height,bounds.minY,bounds.maxY)};
+}
+
+/** Center a map of any rectangular bounds, including negative coordinates. */
+export function centerCameraOnBounds(width,height,bounds) {
+  if (!bounds) return centerCamera(width,height);
+  const cols=bounds.maxX-bounds.minX+1,rows=bounds.maxY-bounds.minY+1;
+  const zoom=Math.max(MIN_ZOOM,Math.min(2,Math.floor(Math.min(width/(cols*TILE_SIZE),height/(rows*TILE_SIZE))*.8*4)/4));
+  return {zoom,x:width/2-(bounds.minX+cols/2)*TILE_SIZE*zoom,
+    y:height/2-(bounds.minY+rows/2)*TILE_SIZE*zoom};
 }
