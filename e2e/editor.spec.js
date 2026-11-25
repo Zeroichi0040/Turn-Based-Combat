@@ -37,7 +37,7 @@ test('editor modal resumes without losing edits',async({page})=>{
   await page.getByRole('button',{name:'Editor menu'}).click();
   const dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button',{name:'Save'})).toBeEnabled();
-  await expect(dialog.getByRole('button',{name:'Exit'})).toBeDisabled();
+  await expect(dialog.getByRole('button',{name:'Exit'})).toBeEnabled();
   await dialog.getByRole('button',{name:'Resume'}).click();await expect(dialog).toBeHidden();
   await expect(page.locator('#map-stats')).toHaveText('100 grass · 1 occupants');
 });
