@@ -14,10 +14,10 @@ test('empty terrain cannot be crossed even to reach grass within geometric range
  assert.ok(!reachableCells(s,id).has('6,4'));assert.ok(reachableCells(s,id).has('5,5'));
  assert.equal(moveUnit(s,id,5,4),false);assert.equal(s.units.get(id).spent,false);
 });
-test('occupied cells may be traversed but not ended on in milestone 4',()=>{
+test('occupied units block destinations but buildings with space allow entry',()=>{
  const {map}=setup();applyEdit(map,unit,5,4);applyEdit(map,building,4,5);
  const s=createSession(map),id=entityAt(s,4,4).entity.id,r=reachableCells(s,id);
- assert.ok(!r.has('5,4'));assert.ok(!r.has('4,5'));assert.ok(r.has('6,4'));assert.ok(r.has('4,6'));
+ assert.ok(!r.has('5,4'));assert.ok(r.has('4,5'));assert.ok(r.has('6,4'));assert.ok(r.has('4,6'));
 });
 test('movement commits once per turn, marks unit spent and resets next turn',()=>{
  const {session,id}=setup();assert.ok(moveUnit(session,id,5,4));assert.equal(entityAt(session,4,4),null);
@@ -40,6 +40,6 @@ test('selection highlights reachable cells, commits legal moves and rejects inva
 test('building selection remains inspectable and unit IDs are distinct',()=>{
  const {map}=setup();applyEdit(map,building,3,4);const s=createSession(map);
  const first=selectTile(s,null,3,4);assert.equal(first.selection.kind,'building');
- assert.match(selectTile(s,first.selection,3,4).message,/milestone 5/);
+ assert.equal(selectTile(s,first.selection,3,4).openBuildingId,first.selection.id);
  assert.notEqual(entityAt(s,3,4).entity.id,entityAt(s,4,4).entity.id);
 });

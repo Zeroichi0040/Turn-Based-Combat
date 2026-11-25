@@ -50,6 +50,12 @@
   <h2 id="end-turn-title">End Turn?</h2><p>All units will be ready to move at the start of the next turn.</p>
   <div class="modal-actions"><button id="cancel-end-turn" type="button" autofocus>Cancel</button><button id="confirm-end-turn" type="button">End Turn</button></div>
 </dialog>
+<dialog id="garrison-dialog" aria-labelledby="garrison-title">
+  <h2 id="garrison-title">Garrison</h2><p id="garrison-count"></p>
+  <div id="garrison-slots" class="garrison-slots" aria-label="Garrison slots"></div>
+  <p id="garrison-status" role="status"></p>
+  <div class="modal-actions"><button id="close-garrison" autofocus type="button">Close</button></div>
+</dialog>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>

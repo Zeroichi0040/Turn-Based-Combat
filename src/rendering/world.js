@@ -29,7 +29,18 @@ export function drawWorld(ctx,width,height,camera,grass,occupants=[],cursor=null
   }
   for(const k of grass){const p=point(k);draw('grass',p.x,p.y);}
   for(const k of overlay?.reachable??[]){const p=point(k);highlight(p.x,p.y,'#dfd77555','#d8d77b');}
-  for(const o of occupants)draw(o.sprite,o.x,o.y,o.spent);
+  const counts=[];
+  for(const o of occupants){draw(o.sprite,o.x,o.y,o.spent);if(Number.isInteger(o.garrisonCount))counts.push(o);}
+  if(overlay?.deployment){const d=overlay.deployment;draw(d.sprite,d.x,d.y);}
+  // Count badges are drawn last so a deployment preview never obscures them.
+  for(const o of counts){
+    const r=rect(o.x,o.y);if(!r)continue;
+    const font=Math.max(9,Math.min(14,Math.floor(size*.28))),label=String(o.garrisonCount);
+    ctx.font='bold '+font+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    const w=Math.ceil(ctx.measureText(label).width)+6,h=font+4;
+    const x=r.left+r.w-w-1,y=r.top+1;
+    ctx.fillStyle='#171812';ctx.fillRect(x,y,w,h);ctx.fillStyle='#f1e0ad';ctx.fillText(label,x+w/2,y+h/2);
+  }
   if(overlay?.selected){const {x,y}=overlay.selected;highlight(x,y,null,'#f7e1a0');}
   if(cursor)highlight(cursor.x,cursor.y,null,cursor.mode==='erase'?'#db795e':'#e7cf82');
 }
