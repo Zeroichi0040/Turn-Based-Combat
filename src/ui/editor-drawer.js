@@ -46,7 +46,7 @@ export function mountDrawer(root,onChange) {
     const modes=document.createElement('div');modes.className='tool-modes';
     for (const [id,label] of [['place','Place'],['erase','Erase']]) {
       const button=makeButton(label,()=>{mode=id;render();});
-      button.setAttribute('aria-pressed',String(mode===id));modes.append(button);
+      button.dataset.mode=id;button.setAttribute('aria-pressed',String(mode===id));modes.append(button);
     }
     const assets=document.createElement('div');assets.className='asset-grid';
     for (const item of Object.values(categories[category])) {

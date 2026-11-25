@@ -21,10 +21,12 @@ Implemented independent runtime sessions, stable entity IDs, Swordsman selection
 Implemented shared capacity-aware entry, deployment and direct transfer; stored unit IDs and null map positions; counts visible on buildings, 2 Barracks slots and 4 Town Hall slots, inspect/select-again, spent shading and cancellation without mutation. Full buildings remain traversable. Production slot and training are deferred to milestone 6. Seven new logic tests and two browser workflows; initial garrison CI passed. Owner requested deselection on unreachable empty tiles and hidden zero-count map badges; implemented with updated selection tests and a new badge browser regression. Latest CI passed; owner approved PR #5 and it was merged.
 
 ## Milestone 6 — unit production
-Implemented recurring capacity-aware Barracks orders, one-turn Swordsman training, immediate readiness, paused sprite shading, automatic resumption after deployment and dedicated cancellation. Training picker uses two separate selections and a nested modal; Town Hall has no production slot. No gameplay saves. Seven unit tests and two browser workflows added; CI pending.
+Implemented recurring capacity-aware Barracks orders, one-turn Swordsman training, immediate readiness, paused sprite shading, automatic resumption after deployment and dedicated cancellation. Training picker uses two separate selections and a nested modal; Town Hall has no production slot. No gameplay saves. Seven unit tests and two browser workflows added; CI passed and owner approved PR #6, merged.
+
+## Milestone 7 — first visual pass
+Reworked all four native 32×32 generated sprites with a shared medieval palette, distinct silhouettes and top-left lighting. Eight deterministic grass variants plus cardinal exposed-edge masks; no save changes, cache bounded to 128 terrain variants. Refined selection corners, reachable tile highlights, count badges, square beveled controls, recessed slots, menus and crest. No gameplay rule changes. Added two terrain-art unit tests and one browser sprite test. CI and actual visual review pending; further art direction remains open to owner feedback.
 
 ## Next
-7. Sprites and UI polish: dedicated art and interface refinement after mechanics.
 8. Release hardening: integration/browser tests, performance, bug fixes.
 
 No combat, economy, enemies or mobile controls in initial scope.

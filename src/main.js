@@ -22,7 +22,7 @@ function button(label,fn){
 }
 function report(target,err){target.textContent=err instanceof Error?err.message:'Operation failed.';}
 function renderNav(next=route){
-  route=next;nav.hidden=false;heading.textContent=next==='home'?'Turn-Based Combat':next==='edit'?'Manage Maps':'Select Map';
+  route=next;nav.dataset.route=next;nav.hidden=false;heading.textContent=next==='home'?'Turn-Based Combat':next==='edit'?'Manage Maps':'Select Map';
   actions.replaceChildren();list.replaceChildren();error.textContent='';
   if(next==='home'){
     actions.append(button('Start',()=>renderNav('start')),button('Edit',()=>renderNav('edit')));

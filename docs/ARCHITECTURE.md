@@ -7,7 +7,8 @@ Current modules:
 - src/content/definitions.js: stable content IDs and definitions.
 - src/rendering/camera.js: coordinate transforms, zoom/pan math and camera clamping; no DOM.
 - src/rendering/keyboard-pan.js: held-key order, normalized direction, frame-based pan input and listener cleanup.
-- src/rendering/sprites.js: generated pixel sprites cached by ID.
+- src/rendering/sprites.js: shared-palette native 32×32 pixel art, cached by ID (grass additionally uses eight variants and 16 edge masks).
+- src/rendering/terrain-art.js: deterministic coordinate hash and cardinal exposed-edge mask, pure rendering helpers; not persisted.
 - src/rendering/world.js: draw visible terrain and occupants, never mutate map.
 - src/editor/map.js: authoritative editor map and validated placement/erase commands; runtime occupants keyed by coordinate.
 - src/editor/stroke.js: cardinal interpolation, placement deduplication and one-layer-per-entry erasure; tool frozen at stroke start. Break interpolation over overlays.
@@ -21,7 +22,7 @@ Current modules:
 - src/ui/garrison-dialog.js: capacity-driven slots, inspection, deployment and production controls; mutations delegated to rule functions.
 - src/ui/production-dialog.js: nested training picker; two-step selection and validated order assignment.
 - src/main.js: navigation, modal actions, dirty revision tracking and map persistence coordination.
-- src/styles.css: visual presentation.
+- src/styles.css: shared medieval theme tokens and presentation; no external assets or fonts.
 
 Further additions should follow existing game/ and ui/ boundaries.
 
