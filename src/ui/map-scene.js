@@ -20,7 +20,7 @@ let map=null,mode='edit',session=null,selection=null;
 const blocked=()=>Boolean(document.querySelector('dialog[open]'));
 const garrisonDialog=createGarrisonDialog({
   getSession:()=>session,
-  onDeploy(id){selection={kind:'unit',id};status.textContent='Deployment selected. Choose a highlighted tile or press Escape to cancel.';canvas.focus({preventScroll:true});render();},
+  onDeploy(id){selection={kind:'unit',id};status.textContent='Deployment selected';canvas.focus({preventScroll:true});render();},
   onClose(){if(session&&!screen.hidden&&!blocked())canvas.focus({preventScroll:true});render();},
 });
 function updateTurn(){turnLabel.textContent=session?'Turn '+session.turn:'';}
@@ -154,9 +154,9 @@ return {
     document.querySelector('#drawer').hidden=mode!=='edit';
     document.querySelector('#drawer').replaceChildren();
     if(mode==='edit')mountDrawer(document.querySelector('#drawer'),next=>{
-      endGesture();tool=next;canvas.dataset.tool=tool.mode;stats();render();
+      endGesture();lastPointer=null;tool=next;canvas.dataset.tool=tool.mode;stats();render();
     });
-    status.textContent=mode==='edit'?'Select an asset and click or drag to edit.':'Select a Swordsman to see its available moves.';
+    status.textContent='';
     canvas.dataset.mode=mode;
     resize();canvas.focus({preventScroll:true});
   },

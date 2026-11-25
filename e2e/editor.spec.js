@@ -45,6 +45,8 @@ test('editor modal resumes without losing edits',async({page})=>{
 test('drawer overlays the canvas without changing its size or position',async({page})=>{
   const world=page.locator('#world');
   const original=await world.boundingBox();
+  await page.getByRole('button',{name:'Reset camera'}).hover();
+  await expect(page.locator('#coordinate')).toHaveText('—');
   const pixels=await world.evaluate(canvas=>canvas.toDataURL());
   await page.getByRole('button',{name:'Close drawer'}).click();
   await expect(page.locator('#drawer-panel')).toBeHidden();
@@ -52,7 +54,9 @@ test('drawer overlays the canvas without changing its size or position',async({p
   await page.getByRole('button',{name:'Tiles',exact:true}).click();
   await expect(page.locator('#drawer-panel')).toBeVisible();
   expect(await world.boundingBox()).toEqual(original);
-  expect(await world.evaluate(canvas=>canvas.toDataURL())).toEqual(pixels);
+  await page.getByRole('button',{name:'Reset camera'}).hover();
+  await expect(page.locator('#coordinate')).toHaveText('—');
+  expect(await world.evaluate(canvas=>canvas.toDataURL())===pixels).toBe(true);
 });
 test('drag eraser removes another layer only on re-entry',async({page})=>{
   await page.getByRole('button',{name:'Units'}).click();

@@ -112,3 +112,34 @@ input{font:inherit;color:inherit;background:var(--well);border:1px solid #74694c
 .production-choices{display:flex;justify-content:center;gap:8px;margin:14px 0}
 .training-choice{width:92px;height:104px}
 .training-choice small{font-size:10px;color:var(--muted)}
+
+/* Stable control sizes and modal geometry by role, independent of label length. */
+:root{--button-width:112px;--button-height:36px;--slot-size:84px;--modal-width:420px}
+.nav-actions button,.modal-actions button{width:var(--button-width);min-width:0;height:var(--button-height);flex:none;padding:0 8px}
+.navigation[data-route=home] .nav-actions button{width:152px;min-width:0;height:46px;padding:0 8px}
+.map-row-actions button{width:76px;height:32px;padding:0 4px}
+#reset{width:128px;height:36px;padding:0 6px}
+.hamburger,#end-turn{width:38px;height:36px}
+#turn-label{width:84px;height:36px;display:grid;place-items:center;padding:0}
+.drawer-panel{width:216px}
+.drawer-rail{width:52px}
+.drawer-rail button{width:48px;height:48px}
+.drawer-rail .drawer-close{height:32px}
+.tool-modes button{height:32px}
+.asset-button{height:88px;min-height:0}
+.asset-button img{width:48px;height:48px}
+dialog{width:var(--modal-width);min-width:0;height:224px;max-height:90vh;overflow:auto}
+dialog[open]{display:flex;flex-direction:column}
+dialog .modal-actions{margin-top:auto;padding-top:16px;flex:none}
+#map-form{display:flex;flex:1;flex-direction:column;min-height:0}
+#garrison-dialog{width:540px;min-width:0;height:320px}
+#production-dialog{width:300px;min-width:0;height:248px}
+.garrison-slot,.production-slot{width:var(--slot-size);height:var(--slot-size);flex:none}
+.training-choice{width:96px;height:104px}
+#cancel-production{width:68px;height:32px;padding:0 4px;flex:none}
+.building-slots{flex:none;margin:16px 0 8px;min-height:118px}
+#garrison-status,#production-status{min-height:18px;margin:0}
+#production-state{min-height:17px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+/* Canvas keyboard focus is not a gold frame around the entire battlefield. */
+canvas:focus-visible{outline:none}

@@ -56,10 +56,8 @@ export function mountDrawer(root,onChange) {
       const label=document.createElement('span');label.textContent=item.name;
       button.append(iconFor(item.sprite),label);assets.append(button);
     }
-    const note=document.createElement('p');note.className='drawer-note';
-    note.textContent=mode==='erase'?'Universal eraser: remove one layer per pass. Leave and re-enter a tile to erase the next layer.':'Click or drag to place the selected asset.';
     const count=document.createElement('div');count.id='map-stats';count.className='map-stats';
-    panel.replaceChildren(heading,modes,assets,note,count);
+    panel.replaceChildren(heading,modes,assets,count);
     onChange(getTool());
   }
   render();
