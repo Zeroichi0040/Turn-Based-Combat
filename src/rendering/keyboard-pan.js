@@ -40,7 +40,7 @@ function blocksCamera(target) {
 }
 
 /** Bind keyboard panning to the display clock rather than OS key repeat. */
-export function bindCameraKeyboard({ move, reset, win = window, doc = document }) {
+export function bindCameraKeyboard({ move, reset, enabled=()=>true, win = window, doc = document }) {
   const keys = createPanKeys();
   let frame = null, last = 0;
   function advance(now) {
@@ -52,6 +52,7 @@ export function bindCameraKeyboard({ move, reset, win = window, doc = document }
   }
   function tick(now) {
     frame = null;
+    if (!enabled()){stop();return;}
     if (!keys.active) return;
     advance(now);
     frame = win.requestAnimationFrame(tick);
@@ -62,6 +63,7 @@ export function bindCameraKeyboard({ move, reset, win = window, doc = document }
     frame = null;
   }
   function down(event) {
+    if (!enabled()){stop();return;}
     if (event.ctrlKey || event.metaKey || event.altKey || blocksCamera(event.target)) {
       stop();
       return;
@@ -81,6 +83,7 @@ export function bindCameraKeyboard({ move, reset, win = window, doc = document }
     if (frame === null) frame = win.requestAnimationFrame(tick);
   }
   function up(event) {
+    if (!enabled()){stop();return;}
     if (!keys.has(event.key)) return;
     advance(win.performance.now());
     keys.release(event.key);

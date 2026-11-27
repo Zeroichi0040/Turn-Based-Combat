@@ -1,5 +1,6 @@
 import {newTerrain,key,point,cardinal,terrainBounds} from '../core/grid.js';
 import {categories} from '../editor/map.js';
+import {openDatabase,transaction,request} from './database.js';
 
 export const STORAGE_KEY='turn-based-combat.maps';
 export const SAVE_VERSION=1;
@@ -51,49 +52,102 @@ export function hydrateMap(record) {
 export function serializeMap(map){
   return {grass:[...map.grass],occupants:[...map.occupants].map(([k,o])=>({...point(k),category:o.category,id:o.id}))};
 }
-function validateRecord(record) {
+function metadata(record){
+  return {id:record.id,name:record.name,grassCount:record.grass.length,occupantCount:record.occupants.length,revision:record.revision};
+}
+function validateRecord(record){
   if(!record||typeof record.id!=='string'||!record.id||!normalizeName(record.name)||record.name!==record.name.trim())fail('Invalid saved map metadata.');
   hydrateMap(record);
 }
-export function createMapStore(storage,{makeId=()=>crypto.randomUUID()}={}){
-  function list(){
-    const raw=storage.getItem(STORAGE_KEY);
-    if(raw===null)return [];
-    let data;try{data=JSON.parse(raw);}catch{fail('Saved maps are unreadable. Existing data has not been changed.');}
-    if(data?.version!==SAVE_VERSION||!Array.isArray(data.maps))fail('Unsupported map save format. Existing data has not been changed.');
-    const ids=new Set();
-    for(const record of data.maps){validateRecord(record);if(ids.has(record.id))fail('Duplicate map identifier.');ids.add(record.id);}
-    return data.maps;
+export class MapConflict extends Error{
+  constructor(){super('This map changed in another tab or was deleted. Save as Copy to keep your edits.');this.name='MapConflict';}
+}
+/** Transactional per-map records. Legacy storage is kept untouched as a backup.
+ * Corrupt records are catalogued separately and can be exported without loading.
+ */
+export function createMapStore(storage,{factory=globalThis.indexedDB,dbName,makeId=()=>crypto.randomUUID()}={}){
+  let ready;
+  const stores=['maps','catalog','settings'];
+  async function initialize(){
+    if(!factory)fail('IndexedDB is unavailable.');
+    const db=await openDatabase(factory,dbName);
+    try{
+      await transaction(db,stores,'readwrite',async ({maps,catalog,settings})=>{
+        if(await request(settings.get('legacy-imported')))return;
+        const raw=storage?.getItem(STORAGE_KEY);
+        if(raw!=null){
+          let data;try{data=JSON.parse(raw);}catch{fail('Legacy maps are unreadable. Export the legacy backup before recovery.');}
+          if(data?.version!==SAVE_VERSION||!Array.isArray(data.maps))fail('Unsupported legacy save format. Original data is preserved.');
+          const seen=new Set();
+          for(const [i,item] of data.maps.entries()){
+            try{
+              validateRecord(item);
+              if(seen.has(item.id))fail('Duplicate map identifier.');
+            }catch(err){
+              const id='quarantine-'+makeId();
+              await request(maps.add({id,raw:item}));
+              await request(catalog.add({id,name:typeof item?.name==='string'?item.name:'Corrupt map '+(i+1),corrupt:true,error:err.message}));
+              continue;
+            }
+            seen.add(item.id);
+            const record={...item,revision:1};
+            await request(maps.add(record));await request(catalog.add(metadata(record)));
+          }
+        }
+        await request(settings.add({id:'legacy-imported',version:1}));
+      });
+      return db;
+    }catch(err){db.close();throw err;}
   }
-  function write(records){
-    for(const record of records)validateRecord(record);
-    storage.setItem(STORAGE_KEY,JSON.stringify({version:SAVE_VERSION,maps:records}));
+  const db=()=>ready??=initialize();
+  const read=async(names,fn)=>transaction(await db(),names,'readonly',fn);
+  const write=async(names,fn)=>transaction(await db(),names,'readwrite',fn);
+  async function find(store,id){
+    const record=await request(store.get(id));if(!record)fail('Map no longer exists.');return record;
   }
-  function find(records,id){const record=records.find(r=>r.id===id);if(!record)fail('Map no longer exists.');return record;}
+  async function insert(name,map){
+    const content=serializeMap(map);
+    hydrateMap(content);
+    return write(['maps','catalog'],async({maps,catalog})=>{
+      const id=makeId(),records=await request(catalog.getAll());
+      const record={id,name:normalizeName(name)||defaultMapName(records),revision:1,...content};
+      await request(maps.add(record));await request(catalog.add(metadata(record)));return record;
+    });
+  }
   return {
-    list,
-    get(id){return find(list(),id);},
-    create(name){
-      const records=list(),id=makeId();
-      if(!id||records.some(r=>r.id===id))fail('Could not generate a unique map identifier.');
-      const record={id,name:normalizeName(name)||defaultMapName(records),grass:[...newTerrain()],occupants:[]};
-      write([...records,record]);return record;
+    list(){return read(['catalog'],async({catalog})=>request(catalog.getAll()));},
+    async get(id){
+      return read(['maps'],async({maps})=>{const record=await find(maps,id);validateRecord(record);return record;});
     },
-    rename(id,name){
-      const records=list(),old=find(records,id),next=normalizeName(name);
-      if(!next)fail('Enter a map name.');
-      const record={...old,name:next};
-      write(records.map(r=>r.id===id?record:r));return record;
+    create(name){return insert(name,{grass:newTerrain(),occupants:new Map()});},
+    copy(name,map){return insert(name,map);},
+    rename(id,name,expectedRevision){
+      const next=normalizeName(name);if(!next)fail('Enter a map name.');
+      return write(['maps','catalog'],async({maps,catalog})=>{
+        const old=await find(maps,id);validateRecord(old);
+        if(expectedRevision!==undefined&&old.revision!==expectedRevision)throw new MapConflict();
+        const record={...old,name:next,revision:old.revision+1};
+        await request(maps.put(record));await request(catalog.put(metadata(record)));return record;
+      });
     },
-    save(id,map,expected=null){
-      const records=list(),old=find(records,id);
-      // Detect a stale editor snapshot, but allow independent changes and renames.
-      if(expected&&(JSON.stringify(old.grass)!==JSON.stringify(expected.grass)||
-        JSON.stringify(old.occupants)!==JSON.stringify(expected.occupants)))
-        fail('This map changed in another tab. Your edits are still open; reopen the map before saving.');
-      const record={...old,...serializeMap(map)};
-      write(records.map(r=>r.id===id?record:r));return record;
+    save(id,map,expectedRevision){
+      const content=serializeMap(map);hydrateMap(content);
+      return write(['maps','catalog'],async({maps,catalog})=>{
+        const old=await request(maps.get(id));
+        if(!old||old.revision!==expectedRevision)throw new MapConflict();
+        const record={...old,...content,revision:old.revision+1};
+        await request(maps.put(record));await request(catalog.put(metadata(record)));return record;
+      });
     },
-    remove(id){const records=list();find(records,id);write(records.filter(r=>r.id!==id));},
+    remove(id,expectedRevision){
+      return write(['maps','catalog'],async({maps,catalog})=>{
+        const old=await find(catalog,id);
+        if(!old.corrupt&&old.revision!==expectedRevision)throw new MapConflict();
+        await request(maps.delete(id));await request(catalog.delete(id));
+      });
+    },
+    exportRecord(id){return read(['maps'],async({maps})=>find(maps,id));},
+    legacyBackup(){return storage?.getItem(STORAGE_KEY)??null;},
+    async close(){(await db()).close();},
   };
 }

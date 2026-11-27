@@ -34,9 +34,10 @@ export function createStroke(map,tool) {
         if (previous && p.x===previous.x && p.y===previous.y) continue;
         if (selected.mode!=='erase') {
           if (visited.has(k)) continue;
-          visited.add(k);
+
         }
         last=applyEdit(map,selected,p.x,p.y);
+        if(last.changed&&selected.mode!=='erase')visited.add(k);
         changed ||= last.changed;
       }
       previous={...tile};

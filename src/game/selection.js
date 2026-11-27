@@ -25,7 +25,7 @@ export function selectTile(session,selection,x,y){
       }
       return {selection:{kind:'unit',id:selection.id,destination},message:'Confirm move'};
     }
-    if(unit&&!unit.spent&&target?.kind==='building'&&!hasGarrisonSpace(target.entity))
+    if(unit&&!unit.spent&&target?.kind==='building'&&!hasGarrisonSpace(target.entity)&&reachablePaths(session,selection.id,{includeFullBuildings:true}).has(destination))
       return {selection:{kind:'unit',id:selection.id},message:'Garrison is full.'};
   }
   if(!target)return {selection:null,message:'Select a unit to move.'};

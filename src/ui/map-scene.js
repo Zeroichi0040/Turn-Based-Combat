@@ -8,7 +8,7 @@ import {createGarrisonDialog} from './garrison-dialog.js';
 import {createSession,renderSession,endTurn} from '../game/session.js';
 import {selectTile,selectionOverlay} from '../game/selection.js';
 
-export function createMapScene({onSave,onExit,onChange}) {
+export function createMapScene({onSave,onCopy,onExit,onChange}) {
 const screen=document.querySelector('#map-screen');
 const canvas=document.querySelector('#world'),ctx=canvas.getContext('2d');
 const status=document.querySelector('#status'),coordinate=document.querySelector('#coordinate');
@@ -16,7 +16,8 @@ const menu=document.querySelector('#editor-menu');
 const turnDialog=document.querySelector('#end-turn-dialog');
 const turnButton=document.querySelector('#end-turn');
 const turnLabel=document.querySelector('#turn-label');
-let map=null,mode='edit',session=null,selection=null;
+let map=null,mode='edit',session=null,selection=null,saving=false;
+const terrainState=()=>session??map;
 const blocked=()=>Boolean(document.querySelector('dialog[open]'));
 const garrisonDialog=createGarrisonDialog({
   getSession:()=>session,
@@ -38,15 +39,15 @@ function tileAt(clientX,clientY) {
 function render() {
   if(!map||!camera||screen.hidden)return;
   // Freeze camera transform while painting; clamp to updated bounds at stroke end.
-  if(gesture?.kind!=='paint')camera=clampCamera(camera,width,height,map.bounds);
+  if(gesture?.kind!=='paint')camera=clampCamera(camera,width,height,terrainState().bounds);
   if(lastPointer) {
     hover=tileAt(lastPointer.x,lastPointer.y);
     coordinate.textContent=hover.x+', '+hover.y;
   } else {hover=null;coordinate.textContent='—';}
   ctx.setTransform(ratio,0,0,ratio,0,0);
-  drawWorld(ctx,width,height,camera,map.grass,session?renderSession(session):renderOccupants(map),mode==='edit'&&hover&&!blocked()?{...hover,mode:tool.mode}:null,session?selectionOverlay(session,selection):null);
+  drawWorld(ctx,width,height,camera,terrainState().grass,session?renderSession(session):renderOccupants(map),mode==='edit'&&hover&&!blocked()?{...hover,mode:tool.mode}:null,session?selectionOverlay(session,selection):null);
 }
-function reset() {if(!map||gesture||screen.hidden)return;camera=centerCameraOnBounds(width,height,map.bounds);render();}
+function reset() {if(!map||gesture||screen.hidden)return;camera=centerCameraOnBounds(width,height,terrainState().bounds);render();}
 function resize() {
   if(!map||screen.hidden)return;
   const rect=canvas.getBoundingClientRect(),oldW=width,oldH=height,nextRatio=window.devicePixelRatio||1;
@@ -89,16 +90,17 @@ canvas.addEventListener('pointerdown',e=>{
   }
   canvas.setPointerCapture(e.pointerId);
   if(e.button===0) {
-    gesture={kind:'paint',id:e.pointerId,stroke:createStroke(map,tool)};
+    gesture={kind:'paint',id:e.pointerId,button:1,stroke:createStroke(map,tool)};
     paint(e);
   } else {
-    gesture={kind:'pan',id:e.pointerId,x:e.clientX,y:e.clientY};
+    gesture={kind:'pan',id:e.pointerId,button:e.button===1?4:2,x:e.clientX,y:e.clientY};
     canvas.classList.add('dragging');
   }
   render();
 });
 canvas.addEventListener('pointermove',e=>{
   if(!map||!camera||screen.hidden||blocked()||(gesture&&gesture.id!==e.pointerId))return;
+  if(gesture&&!(e.buttons&gesture.button)){endGesture(e);return;}
   lastPointer={x:e.clientX,y:e.clientY};
   if(gesture?.kind==='paint')paint(e);
   else if(gesture?.kind==='pan'){
@@ -121,8 +123,9 @@ canvas.addEventListener('wheel',e=>{
   camera=zoomAt(camera,e.clientX-rect.left,e.clientY-rect.top,Math.exp(-delta*.001));render();
 },{passive:false});
 bindCameraKeyboard({
+   enabled:()=>Boolean(map&&!screen.hidden&&!blocked()),
   move(dx,dy){if(map&&camera&&!screen.hidden&&!gesture&&!blocked()){
-    const next=clampCamera({...camera,x:camera.x+dx,y:camera.y+dy},width,height,map.bounds);
+    const next=clampCamera({...camera,x:camera.x+dx,y:camera.y+dy},width,height,terrainState().bounds);
     if(next.x!==camera.x||next.y!==camera.y){camera=next;render();}
   }},
   reset(){if(map&&!screen.hidden&&!blocked())reset();}
@@ -142,11 +145,13 @@ window.addEventListener('keydown',e=>{if(e.key==='Escape'&&session&&!screen.hidd
 document.querySelector('#resume').addEventListener('click',()=>menu.close());
 menu.addEventListener('close',()=>{if(!screen.hidden&&map&&!document.querySelector('dialog[open]'))canvas.focus({preventScroll:true});render();});
 new ResizeObserver(resize).observe(canvas);
-document.querySelector('#save-map').addEventListener('click',()=>{if(onSave())menu.close();});
+document.querySelector('#save-map').addEventListener('click',async()=>{if(await onSave())menu.close();});
+ document.querySelector('#save-copy').addEventListener('click',async()=>{if(await onCopy())menu.close();});
+ for(const dialog of [menu,document.querySelector('#unsaved-dialog')])dialog.addEventListener('cancel',e=>{if(saving)e.preventDefault();});
 document.querySelector('#exit-map').addEventListener('click',()=>{menu.close();onExit();});
 return {
   open(nextMap,nextMode,name){
-    endGesture();document.querySelector('#menu-error').textContent='';map=nextMap;mode=nextMode;session=mode==='play'?createSession(map):null;selection=null;camera=null;lastPointer=null;hover=null;
+    endGesture();this.setConflict(false);document.querySelector('#menu-error').textContent='';map=nextMap;mode=nextMode;session=mode==='play'?createSession(map):null;selection=null;camera=null;lastPointer=null;hover=null;
     turnButton.hidden=!session;turnLabel.hidden=!session;updateTurn();
     screen.hidden=false;
     document.querySelector('#scene-title').textContent=mode==='edit'?'Map Editor':'Battlefield';
@@ -165,6 +170,9 @@ return {
     resize();canvas.focus({preventScroll:true});
   },
   close(){endGesture();screen.hidden=true;if(menu.open)menu.close();if(turnDialog.open)turnDialog.close();garrisonDialog.close();session=null;selection=null;map=null;camera=null;lastPointer=null;},
+  setName(name){document.querySelector('#scene-name').textContent=name;},
+  setConflict(conflict){for(const id of ['save-copy','exit-copy'])document.querySelector('#'+id).hidden=!conflict;},
+  setSaving(value){saving=value;for(const id of ['resume','save-map','exit-map','save-copy','exit-save','exit-copy','exit-discard','exit-cancel'])document.querySelector('#'+id).disabled=value;},
   getMap(){return map;},
   setStatus(message){status.textContent=message;},
 };

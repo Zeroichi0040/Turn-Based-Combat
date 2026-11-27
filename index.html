@@ -31,7 +31,7 @@
 </div>
 <dialog id="editor-menu" aria-labelledby="menu-title">
   <h2 id="menu-title">Map Editor</h2>
-  <p id="menu-error" role="alert"></p>
+  <p id="menu-error" role="alert"></p><button id="save-copy" type="button" hidden>Save as Copy</button>
   <div class="modal-actions"><button id="resume" autofocus type="button">Resume</button><button id="save-map" type="button">Save</button><button id="exit-map" type="button">Exit</button></div>
 </dialog>
 <dialog id="map-dialog" aria-labelledby="form-title">
@@ -44,7 +44,7 @@
   </form>
 </dialog>
 <dialog id="unsaved-dialog" aria-labelledby="unsaved-title">
-  <h2 id="unsaved-title">Unsaved changes</h2><p id="exit-error" role="alert"></p>
+  <h2 id="unsaved-title">Unsaved changes</h2><p id="exit-error" role="alert"></p><button id="exit-copy" type="button" hidden>Save as Copy</button>
   <div class="modal-actions"><button id="exit-save" type="button">Save</button><button id="exit-discard" type="button">Discard</button><button id="exit-cancel" autofocus type="button">Cancel</button></div>
 </dialog>
 <dialog id="end-turn-dialog" aria-labelledby="end-turn-title">

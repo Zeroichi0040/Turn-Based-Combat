@@ -20,7 +20,7 @@ export function entityAt(session,x,y){
   return null;
 }
 /** Reachable destinations by cardinal steps; occupied grass may be traversed. */
-export function reachablePaths(session,unitId){
+export function reachablePaths(session,unitId,{includeFullBuildings=false}={}){
   const u=session.units.get(unitId);
   if(!u||u.spent)return new Map();
   const origin=unitOrigin(session,u);
@@ -28,7 +28,7 @@ export function reachablePaths(session,unitId){
   const start=key(origin.x,origin.y),visited=new Set([start]),queue=[{...origin,distance:0,path:[{...origin}]}],destinations=new Map();
   const blocked=new Set();
   for(const other of session.units.values())if(other.position)blocked.add(key(other.position.x,other.position.y));
-  for(const b of session.buildings.values())if(!hasGarrisonSpace(b))blocked.add(key(b.position.x,b.position.y));
+  for(const b of session.buildings.values())if(!includeFullBuildings&&!hasGarrisonSpace(b))blocked.add(key(b.position.x,b.position.y));
   const budget=units[u.type].movement;
   for(let i=0;i<queue.length;i++){
     const {x,y,distance,path}=queue[i];
