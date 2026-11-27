@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {centerCameraOnBounds} from '../src/rendering/camera.js';
+import {resetGeometry as centerCameraOnBounds,settleFrame,readSavedMaps} from './helpers.js';
 const bounds={minX:0,minY:0,maxX:9,maxY:9};
 async function tile(page,x,y){
   const box=await page.locator('#world').boundingBox(),c=centerCameraOnBounds(box.width,box.height,bounds);
@@ -59,7 +59,7 @@ test('count badges appear only when a building contains units',async({page})=>{
     window.__badgeLabels=[];
     ctx.fillText=(label,...args)=>{window.__badgeLabels.push(String(label));return original(label,...args);};
   });
-  const labels=()=>page.evaluate(()=>window.__badgeLabels.splice(0));
+  const labels=async()=>{await settleFrame(page);return page.evaluate(()=>window.__badgeLabels.splice(0));};
   await page.getByRole('button',{name:'Reset camera'}).click();
   expect(await labels()).toEqual([]);
   await tile(page,3,4);await tile(page,4,4);await tile(page,4,4);

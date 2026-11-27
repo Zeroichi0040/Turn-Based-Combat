@@ -14,8 +14,8 @@ Current modules:
 - src/editor/map.js: authoritative editor map and validated placement/erase commands; runtime occupants keyed by coordinate.
 - src/editor/stroke.js: cardinal interpolation, placement deduplication and one-layer-per-entry erasure; tool frozen at stroke start. Break interpolation over overlays.
 - src/ui/editor-drawer.js: sprite-based category rail and tool controls; drawer overlays a fixed-size viewport.
-- src/storage/map-store.js: versioned local storage, strict validation, serialization/hydration, map CRUD and stale-snapshot detection; no DOM.
-- src/ui/map-scene.js: reusable editor/gameplay wiring, pointer gestures and camera; freezes camera during painting, clamps after stroke.
+- src/storage/map-store.js: versioned IndexedDB records, metadata catalog, migration, validation, serialization/hydration and revision-checked CRUD; no DOM.
+- src/ui/map-scene.js: editor/gameplay coordination, camera and UI lifecycle; freezes camera during painting, clamps after stroke.
 - src/game/session.js: independent runtime entity state, BFS reachable paths and destinations, validated movement and turn advancement.
 - src/game/selection.js: transient selection, pending destination and path projection; second matching click commits validated movement. Opening a building dismisses its presentation-only representative ID.
 - src/game/garrison.js: shared capacity, stored membership, origin and inspection helpers. Stored unit position is null, and exactly one building owns its ID; movement commits transfer atomically.
@@ -28,3 +28,9 @@ Current modules:
 Further additions should follow existing game/ and ui/ boundaries.
 
 Authoritative maps should contain terrain and editor occupants only; active sessions are separate copies with runtime unit IDs and state. Use plain serializable data for persistence and sparse sets/maps at runtime. Every future mutation should pass through a rule function that validates before committing; avoid duplicated validation in UI. UI selection and camera state are transient. Cache terrain bounds and refresh them after terrain edits; clamp all camera changes before drawing. Use a viewport transform rather than a world-sized canvas. Culling must not require allocating the entire coordinate bounds.
+
+## Audit remediation
+- Storage: database.js wraps IndexedDB request/transaction completion. map-store.js owns migration, metadata catalog, isolated records and revision-checked commands. Each mutation updates record and catalog atomically. Original legacy localStorage is untouched. The catalog does not hydrate terrain. Corrupt legacy records and records found damaged on load are isolated and exportable.
+- game/types.js provides JSDoc contracts; typecheck covers gameplay and grid/content with strict null checks (legacy implicit parameters permitted). game/locations.js centralizes occupancy and membership updates, session revision invalidates overlay cache. Indexes must stay consistent with authoritative entities.
+- map-input.js owns pointer gestures and button ownership, map-scene.js coordinates rendering and UI. render-scheduler.js coalesces frame requests; gameplay uses session terrain and bounds. Terrain removal uses early neighbor connectivity with a connected-map precondition.
+- Playwright uses production preview, not source imports; independent coordinate helpers, pixel arrow checks, migration and concurrent-save tests. npm ci uses committed lockfile.

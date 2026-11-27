@@ -65,3 +65,11 @@ test('invalid tools do not mutate editor state',()=>{
   const m=createEditorMap();assert.equal(applyEdit(m,place('buildings','toString'),0,0).changed,false);
   assert.equal(applyEdit(m,grass,NaN,0).changed,false);assert.equal(m.revision,0);
 });
+
+test('previously rejected grass can be placed when re-entering after connection',()=>{
+ const m=createEditorMap(),stroke=createStroke(m,grass);
+ assert.equal(stroke.visit({x:-2,y:0}).changed,false);
+ assert.equal(stroke.visit({x:-1,y:0}).changed,true);
+ assert.equal(stroke.visit({x:-2,y:0}).changed,true);
+ assert.ok(m.grass.has('-2,0'));
+});

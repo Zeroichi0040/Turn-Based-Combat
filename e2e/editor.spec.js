@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {centerCameraOnBounds} from '../src/rendering/camera.js';
+import {resetGeometry as centerCameraOnBounds,settleFrame,readSavedMaps} from './helpers.js';
 const initial={minX:0,minY:0,maxX:9,maxY:9};
 async function tile(page,x,y,bounds=initial){
   await page.getByRole('button',{name:'Reset camera'}).click();
@@ -68,7 +68,7 @@ test('drawer overlays the canvas without changing its size or position',async({p
   await page.mouse.move(x,y);await page.mouse.down({button:'right'});
   await page.mouse.move(x+20,y+36);await page.mouse.up({button:'right'});
   await reset.hover();
-  const draws=()=>page.evaluate(()=>window.__terrainDraws);
+  const draws=async()=>{await settleFrame(page);return page.evaluate(()=>window.__terrainDraws);};
   const before=await draws();expect(before).toHaveLength(100);
   await page.getByRole('button',{name:'Close drawer'}).click();
   await expect(page.locator('#drawer-panel')).toBeHidden();
@@ -91,4 +91,12 @@ test('drag eraser removes another layer only on re-entry',async({page})=>{
   await page.mouse.move(b.x,b.y);await page.mouse.move(a.x,a.y);
   await page.mouse.up();
   await expect(page.locator('#map-stats')).toHaveText('98 grass · 0 occupants');
+});
+
+test('releasing the initiating mouse button stops a stroke even while another button is held',async({page})=>{
+ await page.getByRole('button',{name:'Units',exact:true}).click();
+ const a=await tile(page,4,4),b={x:a.x+64,y:a.y};
+ await page.mouse.move(a.x,a.y);await page.mouse.down({button:'left'});await page.mouse.down({button:'right'});
+ await page.mouse.up({button:'left'});await page.mouse.move(b.x,b.y);await page.mouse.up({button:'right'});
+ await expect(page.locator('#map-stats')).toHaveText('100 grass · 1 occupants');
 });

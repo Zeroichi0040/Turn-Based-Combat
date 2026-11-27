@@ -16,17 +16,19 @@ export function canAddGrass(grass,x,y) {
 export function canRemoveGrass(grass,x,y) {
   const removed=key(x,y);
   if(!grass.has(removed)||grass.size<=1) return false;
-  const start=cardinal(x,y).map(([a,b])=>key(a,b)).find(k=>grass.has(k));
-  if(!start) return false;
-  const seen=new Set([start]), queue=[start];
-  for(let i=0;i<queue.length;i++){
+  // On a connected map, every surviving component contains a former neighbor.
+  // Stop as soon as all of those neighbors can reach one another.
+  const neighbors=cardinal(x,y).map(([a,b])=>key(a,b)).filter(k=>grass.has(k));
+  if(neighbors.length<=1)return neighbors.length===1;
+  const start=neighbors[0],pending=new Set(neighbors.slice(1)),seen=new Set([start]),queue=[start];
+  for(let i=0;i<queue.length&&pending.size;i++){
     const p=point(queue[i]);
     for(const [a,b] of cardinal(p.x,p.y)){
       const k=key(a,b);
-      if(k!==removed&&grass.has(k)&&!seen.has(k)){seen.add(k);queue.push(k);}
+      if(k!==removed&&!seen.has(k)&&grass.has(k)){seen.add(k);queue.push(k);pending.delete(k);}
     }
   }
-  return seen.size===grass.size-1;
+  return pending.size===0;
 }
 
 /** Inclusive tile bounds; derive again after terrain edits. */

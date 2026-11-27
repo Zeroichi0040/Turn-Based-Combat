@@ -50,6 +50,7 @@ export function applyEdit(map, tool, x, y) {
 }
 
 /** Adapt map occupants to the renderer without exposing mutable records. */
-export function* renderOccupants(map) {
-  for (const [k,o] of map.occupants) yield {...point(k),sprite:categories[o.category][o.id].sprite};
+export function* renderOccupants(map,visible=null) {
+  const entries=visible&&visible.length<map.occupants.size?visible.map(p=>{const k=key(p.x,p.y);return [k,map.occupants.get(k)];}).filter(([,o])=>o):map.occupants;
+  for (const [k,o] of entries) yield {...point(k),sprite:categories[o.category][o.id].sprite};
 }
