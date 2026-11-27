@@ -1,5 +1,8 @@
 name: Publish approved release
 on:
+  pull_request:
+    types: [closed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
@@ -13,22 +16,34 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify:
-    if: github.ref == 'refs/heads/main' && github.repository == 'Zeroichi0040/Turn-Based-Combat'
+    if: >-
+      github.repository == 'Zeroichi0040/Turn-Based-Combat' &&
+      ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+       (github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        startsWith(github.event.pull_request.head.ref, 'release/v') &&
+        contains(github.event.pull_request.labels.*.name, 'release-approved')))
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      sha: ${{ steps.version.outputs.sha }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Validate version and notes
+        id: version
         env:
-          VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ needs.verify.outputs.version }}
+          RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
+          RELEASE_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
         run: |
-          node -e 'const v=process.env.VERSION;if(!/^\d+\.\d+\.\d+$/.test(v)||require("./package.json").version!==v||!require("fs").existsSync("docs/RELEASE_NOTES_v"+v+".md"))process.exit(1)'
+          node -e 'const fs=require("fs");const v=process.env.REQUESTED_VERSION||process.env.RELEASE_BRANCH.replace(/^release\/v/,"");const pkg=require("./package.json"),lock=require("./package-lock.json");if(!/^\d+\.\d+\.\d+$/.test(v)||pkg.version!==v||lock.version!==v||lock.packages[""].version!==v||!fs.existsSync("docs/RELEASE_NOTES_v"+v+".md"))process.exit(1);fs.appendFileSync(process.env.GITHUB_OUTPUT,"version="+v+"\nsha="+process.env.RELEASE_SHA+"\n")'
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
@@ -51,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           VERSION: ${{ inputs.version }}
-          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
           set -euo pipefail
           tag="v$VERSION"

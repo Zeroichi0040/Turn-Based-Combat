@@ -22,4 +22,4 @@
 - CI uses Chromium. Other browsers and hardware require separate manual testing.
 - Commit the npm lockfile; use npm ci. Run npm run typecheck and the built-app browser tests.
 
-v0.1.0 was published successfully. Future releases require explicit owner approval. Update package.json and package-lock.json version together, add docs/RELEASE_NOTES_vX.Y.Z.md, merge after review, then manually dispatch Publish approved release on main with the approved version. The workflow verifies the exact commit and refuses an existing tag.
+v0.1.0 was published successfully. Future releases require explicit owner approval. Update package.json and package-lock.json version together, add docs/RELEASE_NOTES_vX.Y.Z.md, merge after review, then manually dispatch Publish approved release on main with the approved version. Alternatively, merge an explicitly owner-authorized same-repository release/vX.Y.Z PR into main with the release-approved label. Ordinary PRs never trigger publication. The release branch version must match package.json and the release notes. The workflow verifies the exact commit and refuses an existing tag.
