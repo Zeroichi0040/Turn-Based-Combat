@@ -5,6 +5,7 @@
   --ink:#161a19;--panel:#272c28;--panel-dark:#1c211f;--well:#151b18;
   --edge:#53584a;--brass:#a78b52;--gold:#e7cd8d;--text:#e8e0cc;--muted:#b2b4a3;
   --ready:#b8cc81;--danger:#e5a18b;color:var(--text);
+  --button-width:112px;--button-height:36px;--slot-size:84px;--modal-width:420px;
 }
 body{margin:0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 [hidden]{display:none!important}
@@ -27,27 +28,28 @@ p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
   box-shadow:inset 0 -1px #111714;
 }
 .editor-header p{font-size:11px}
-.header-divider{color:var(--brass);margin:0 5px}
-.header-actions{display:flex;align-items:center;gap:8px}
+.header-actions{display:flex;align-items:center;gap:8px;flex:none}
+.editor-header>div:first-child{min-width:0}
+#scene-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#reset{width:128px;height:36px;padding:0 6px}
 .hamburger{width:38px;height:36px;display:grid;align-content:center;justify-items:center;gap:4px;padding:0}
 .hamburger span{width:17px;height:2px;background:currentColor}
 .editor-workspace{display:flex;flex:1;min-height:0;position:relative;overflow:hidden}
 .drawer{position:absolute;inset:0 auto 0 0;display:flex;align-items:flex-start;z-index:1;pointer-events:none}
 .drawer-panel,.drawer-rail button{pointer-events:auto}
-.drawer-panel{width:184px;height:100%;background:#252b25;border-right:2px solid #716345;padding:15px 10px;display:flex;flex-direction:column;gap:12px;box-shadow:4px 0 10px #0005}
+.drawer-panel{width:216px;height:100%;background:#252b25;border-right:2px solid #716345;padding:15px 10px;display:flex;flex-direction:column;gap:12px;box-shadow:4px 0 10px #0005}
 .drawer-panel h2{padding:0 3px 9px;border-bottom:1px solid var(--edge)}
-.drawer-rail{width:48px;display:flex;flex-direction:column;gap:3px;padding-top:6px}
-.drawer-rail button{width:44px;height:44px;padding:3px;display:grid;place-items:center;background:#252b25;border-left:0}
+.drawer-rail{width:52px;display:flex;flex-direction:column;gap:3px;padding-top:6px}
+.drawer-rail button{width:48px;height:48px;padding:3px;display:grid;place-items:center;background:#252b25;border-left:0}
 .drawer-rail button[aria-pressed=true]{border-color:var(--gold);border-left:2px solid var(--gold);background:#424635}
-.drawer-rail .drawer-close{height:29px;font-size:23px;line-height:1;color:var(--gold)}
+.drawer-rail .drawer-close{height:32px;font-size:23px;line-height:1;color:var(--gold)}
 .category-button img,.asset-button img{image-rendering:pixelated;width:32px;height:32px}
 .tool-modes{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--well);padding:3px;border:1px solid var(--edge)}
-.tool-modes button{font-size:12px;padding:6px 3px}
+.tool-modes button{font-size:12px;height:32px;padding:6px 3px}
 .tool-modes button[data-mode=erase][aria-pressed=true]{color:#f3c0a6;border-color:#bf8065;background:#4b3830}
 .asset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.asset-button{display:flex;align-items:center;flex-direction:column;gap:5px;min-height:78px;padding:6px 2px;font-size:11px;text-align:center;background:var(--well)}
-.asset-button img{width:40px;height:40px}
-.drawer-note{font-size:11px;padding:0 3px;color:var(--muted)}
+.asset-button{display:flex;align-items:center;flex-direction:column;gap:5px;height:88px;min-height:0;padding:6px 2px;font-size:11px;text-align:center;background:var(--well)}
+.asset-button img{width:48px;height:48px}
 .map-stats{margin-top:auto;color:var(--gold);font-size:11px;border-top:1px solid var(--edge);padding:10px 3px 0;font-variant-numeric:tabular-nums}
 .map-viewport{flex:1;min-width:0;min-height:0;position:relative;background:#000}
 canvas{display:block;width:100%;height:100%;image-rendering:pixelated;touch-action:none;cursor:crosshair}
@@ -56,15 +58,15 @@ canvas[data-mode=play]{cursor:default}
 canvas.dragging{cursor:grabbing}
 .map-overlay{position:absolute;right:10px;bottom:10px;pointer-events:none;padding:5px 8px;border:1px solid var(--edge);background:var(--panel-dark);color:var(--muted);font:12px monospace}
 footer{display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:34px;flex:none;padding:7px 12px;border-top:1px solid #716345;background:#222723;color:var(--text);font-size:12px}
-.controls{color:var(--muted);text-align:right}
 dialog{
   background:var(--panel);color:var(--text);border:2px solid #8d7850;padding:22px;
-  min-width:320px;max-width:90vw;box-shadow:inset 0 0 0 3px #171d19,0 12px 40px #000a;
+  width:var(--modal-width);min-width:0;height:224px;max-height:90vh;overflow:auto;max-width:90vw;box-shadow:inset 0 0 0 3px #171d19,0 12px 40px #000a;
 }
+dialog[open]{display:flex;flex-direction:column}
 dialog::backdrop{background:#0009}
 dialog h2{padding-bottom:10px;border-bottom:1px solid var(--edge)}
-.modal-actions{display:flex;justify-content:center;gap:8px;margin-top:20px}
-.modal-actions button{min-width:74px}
+.modal-actions{display:flex;justify-content:center;gap:8px;margin-top:auto;padding-top:16px;flex:none;flex-wrap:wrap}
+.nav-actions button,.modal-actions button{width:var(--button-width);min-width:0;height:var(--button-height);flex:none;padding:0 8px}
 #confirm-end-turn,#save-map,#form-confirm,#exit-save{border-color:var(--brass);color:var(--gold)}
 .map-screen{height:100%;display:flex;flex-direction:column;min-height:0}
 .navigation{flex:1;min-height:0;overflow:auto;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 40%,#29362a 0%,#171e19 50%,#101411 100%)}
@@ -72,81 +74,48 @@ dialog h2{padding-bottom:10px;border-bottom:1px solid var(--edge)}
 .nav-panel>h1{text-align:center;font-size:30px;letter-spacing:.045em}
 .nav-crest{display:block;width:50px;height:58px;margin:0 auto 14px;color:var(--brass)}
 .nav-actions{display:flex;justify-content:center;gap:10px;margin:22px 0}
-.nav-actions button{min-width:104px}
-.navigation[data-route=home] .nav-actions button{min-width:142px;padding:12px 20px;font-family:Georgia,serif;font-size:17px;color:var(--gold);border-color:var(--brass)}
+.navigation[data-route=home] .nav-actions button{width:152px;min-width:0;height:46px;padding:0 8px;font-family:Georgia,serif;font-size:17px;color:var(--gold);border-color:var(--brass)}
 .map-list{display:grid;gap:8px}
 .saved-map{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--edge);background:var(--panel-dark)}
 .saved-map h3{font-size:15px;margin:0;overflow-wrap:anywhere;color:var(--text)}
 .saved-map>div:first-child{min-width:0}
 .map-row-actions{display:flex;gap:5px;flex:none}
-.map-row-actions button{padding:6px 9px;font-size:12px}
+.map-row-actions button{width:76px;height:32px;padding:0 4px;font-size:12px}
 #map-form label{display:flex;flex-direction:column;gap:6px;margin-top:14px;font-size:13px}
 input{font:inherit;color:inherit;background:var(--well);border:1px solid #74694c;padding:9px;width:100%}
 [role=alert]:not(:empty){color:var(--danger);margin:10px 0}
-#turn-label{font-size:13px;color:var(--gold);font-variant-numeric:tabular-nums;padding:7px 10px;background:var(--well);border:1px solid var(--edge)}
+#turn-label{font-size:13px;color:var(--gold);font-variant-numeric:tabular-nums;width:84px;height:36px;display:grid;place-items:center;padding:0;background:var(--well);border:1px solid var(--edge)}
 #end-turn{font-size:20px;width:38px;height:36px;padding:0;line-height:1;color:var(--gold);border-color:var(--brass)}
-#garrison-dialog{min-width:340px;text-align:center}
-.garrison-slots{display:flex;justify-content:center;gap:8px;margin:18px 0}
+#garrison-dialog{width:540px;min-width:0;height:360px;text-align:center}
+.garrison-slots{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:18px 0;min-width:0}
 .garrison-slot,.production-slot,.training-choice{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   font-size:11px;padding:4px;background:var(--well);box-shadow:inset 0 0 0 2px #0005;
 }
-.garrison-slot{width:72px;height:80px}
+.garrison-slot,.production-slot{width:var(--slot-size);height:var(--slot-size);flex:none}
 .garrison-slot:disabled{opacity:1;color:#858b7b;border-style:dashed;border-color:#50594b}
 .garrison-slot img,.production-slot img,.training-choice img{width:48px;height:48px;image-rendering:pixelated}
 .garrison-slot:not(.spent):not(:disabled) span{color:var(--ready)}
 .garrison-slot.spent img,.production-slot.paused img{filter:grayscale(1) brightness(.42)}
 .garrison-slot.spent span{color:#a9a699}
-#garrison-status{min-height:18px}
-.building-slots{display:flex;align-items:center;justify-content:center;gap:18px;margin:18px 0}
+#garrison-status,#production-status{min-height:18px;margin:0;flex:none}
+.building-slots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px;margin:16px 0 8px;min-height:132px;flex:none}
 .building-slots .garrison-slots{margin:0}
-.production-panel{border-left:1px solid var(--edge);padding-left:18px;min-width:160px}
+.production-panel{border-left:1px solid var(--edge);padding-left:18px;min-width:160px;width:180px;flex:none}
 .production-heading{margin:0 0 6px;text-align:left;color:var(--gold);font-size:11px;letter-spacing:.065em;text-transform:uppercase}
 .production-controls{display:flex;gap:6px;align-items:center}
-.production-slot{width:82px;height:80px}
-#cancel-production{font-size:11px;padding:5px 7px}
-#production-state{text-align:left;font-size:11px;min-height:17px}
+#cancel-production{font-size:11px;width:68px;height:32px;padding:0 4px;flex:none}
+#production-state{text-align:left;font-size:11px;min-height:17px;white-space:normal;overflow-wrap:break-word}
 .production-slot.paused~button{color:#d0bb9e}
-#production-dialog{min-width:260px;text-align:center}
+#production-dialog{width:300px;min-width:0;height:248px;text-align:center}
 #production-dialog::backdrop{background:#0007}
-.production-choices{display:flex;justify-content:center;gap:8px;margin:14px 0}
-.training-choice{width:92px;height:104px}
+.production-choices{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:14px 0}
+.training-choice{width:96px;height:104px;flex:none}
 .training-choice small{font-size:10px;color:var(--muted)}
 
-/* Stable control sizes and modal geometry by role, independent of label length. */
-:root{--button-width:112px;--button-height:36px;--slot-size:84px;--modal-width:420px}
-.nav-actions button,.modal-actions button{width:var(--button-width);min-width:0;height:var(--button-height);flex:none;padding:0 8px}
-.navigation[data-route=home] .nav-actions button{width:152px;min-width:0;height:46px;padding:0 8px}
-.map-row-actions button{width:76px;height:32px;padding:0 4px}
-#reset{width:128px;height:36px;padding:0 6px}
-.hamburger,#end-turn{width:38px;height:36px}
-#turn-label{width:84px;height:36px;display:grid;place-items:center;padding:0}
-.drawer-panel{width:216px}
-.drawer-rail{width:52px}
-.drawer-rail button{width:48px;height:48px}
-.drawer-rail .drawer-close{height:32px}
-.tool-modes button{height:32px}
-.asset-button{height:88px;min-height:0}
-.asset-button img{width:48px;height:48px}
-dialog{width:var(--modal-width);min-width:0;height:224px;max-height:90vh;overflow:auto}
-dialog[open]{display:flex;flex-direction:column}
-dialog .modal-actions{margin-top:auto;padding-top:16px;flex:none}
 #map-form{display:flex;flex:1;flex-direction:column;min-height:0}
-#garrison-dialog{width:540px;min-width:0;height:360px}
-/* Reserve room for the production state and footer, including the full/spent states.
-   Keep overflow auto as a safety net for unusually short viewports. */
-#garrison-dialog .building-slots{min-height:132px}
-#garrison-dialog #garrison-status{flex:none;min-height:18px}
-#garrison-dialog .production-panel{flex:none;width:180px}
-#garrison-dialog .production-controls{gap:6px}
-#garrison-dialog #production-state{white-space:normal;overflow-wrap:break-word}
-#production-dialog{width:300px;min-width:0;height:248px}
-.garrison-slot,.production-slot{width:var(--slot-size);height:var(--slot-size);flex:none}
-.training-choice{width:96px;height:104px}
-#cancel-production{width:68px;height:32px;padding:0 4px;flex:none}
-.building-slots{flex:none;margin:16px 0 8px;min-height:118px}
-#garrison-status,#production-status{min-height:18px;margin:0}
-#production-state{min-height:17px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
-/* Canvas keyboard focus is not a gold frame around the entire battlefield. */
 canvas:focus-visible{outline:none}
+#save-copy,#exit-copy{width:var(--button-width);min-height:var(--button-height);padding:0 4px;align-self:center;margin-top:8px}
+.drawer-panel{overflow-y:auto}
+@media(max-width:600px){.map-row-actions{flex-wrap:wrap;justify-content:flex-end}.saved-map{align-items:flex-start}.modal-actions{gap:4px}.modal-actions button{width:min(112px,28vw)}}

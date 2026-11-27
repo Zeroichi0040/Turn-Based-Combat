@@ -11,11 +11,13 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "vite": "^7.0.0",
     "@playwright/test": "^1.51.1",
-    "fake-indexeddb": "^6.2.4"
+    "fake-indexeddb": "^6.2.4",
+    "typescript": "^5.9.3"
   }
 }
