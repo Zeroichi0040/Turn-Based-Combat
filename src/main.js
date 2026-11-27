@@ -29,7 +29,7 @@ async function renderNav(next=route){
     actions.append(button('Start',()=>renderNav('start')),button('Edit',()=>renderNav('edit')));
     return;
   }
-  actions.append(button('Back',()=>renderNav('home')));
+  actions.append(button('Back',()=>{if(!busy)renderNav('home');}));
   if(next==='edit')actions.append(button('New Map',()=>openForm('create')));
   try{
     if(!store)throw new Error('Browser storage is unavailable.');
@@ -63,12 +63,12 @@ async function saveActive(){
   busy=true;scene.setSaving(true);
   try{
     active.baseline=await store.save(active.id,scene.getMap(),active.baseline.revision);savedRevision=scene.getMap().revision;
-    updateDirty();scene.setStatus('Map saved.');document.querySelector('#menu-error').textContent='';exitError.textContent='';return true;
+    updateDirty();scene.setStatus('Map saved.');scene.setConflict(false);document.querySelector('#menu-error').textContent='';exitError.textContent='';return true;
   }catch(err){report(exitDialog.open?exitError:document.querySelector('#menu-error'),err);scene.setConflict(err instanceof MapConflict);return false;}finally{busy=false;scene.setSaving(false);}
 }
 async function saveCopy(){
   if(busy||active?.mode!=='edit')return false;busy=true;scene.setSaving(true);
-  try{const record=await store.copy((active.baseline.name.slice(0,93)+' (copy)'),scene.getMap());active.id=record.id;active.baseline=record;savedRevision=scene.getMap().revision;updateDirty();scene.setName(record.name);scene.setConflict(false);scene.setStatus('Map saved.');return true;}
+  try{const record=await store.copy((active.baseline.name.slice(0,93)+' (copy)'),scene.getMap());active.id=record.id;active.baseline=record;savedRevision=scene.getMap().revision;updateDirty();scene.setName(record.name);scene.setConflict(false);scene.setStatus('Map saved.');document.querySelector('#menu-error').textContent='';exitError.textContent='';return true;}
   catch(err){report(exitDialog.open?exitError:document.querySelector('#menu-error'),err);return false;}finally{busy=false;scene.setSaving(false);}
 }
 function closeScene(){
@@ -80,6 +80,7 @@ function requestExit(){
   else closeScene();
 }
 function openForm(kind,record){
+  if(busy)return;
   dialogAction={kind,record};
   formTitle.textContent=kind==='create'?'New Map':kind==='rename'?'Rename Map':'Delete Map?';
   nameLabel.hidden=kind==='delete';nameField.disabled=kind==='delete';
@@ -101,7 +102,8 @@ form.addEventListener('submit',async event=>{
   }catch(err){report(formError,err);}finally{busy=false;confirmButton.disabled=false;}
 });
 formDialog.addEventListener('close',()=>{if(!formDialog.open)dialogAction=null;});
-document.querySelector('#form-cancel').addEventListener('click',()=>formDialog.close());
+formDialog.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+document.querySelector('#form-cancel').addEventListener('click',()=>{if(!busy)formDialog.close();});
 document.querySelector('#exit-save').addEventListener('click',async()=>{if(await saveActive())closeScene();});
 document.querySelector('#exit-copy').addEventListener('click',async()=>{if(await saveCopy())closeScene();});
 document.querySelector('#exit-discard').addEventListener('click',()=>{if(!busy)closeScene();});

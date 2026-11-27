@@ -60,3 +60,14 @@ test('destination can change or cancel without movement; preview follows valid t
  assert.equal(selectTile(s,selected,9,9).selection,null);
  assert.equal(s.units.get(id).spent,false);
 });
+
+test('distant full building remains selectable while a unit is selected',()=>{
+ const {map}=setup(1,1);applyEdit(map,building,8,8);
+ applyEdit(map,unit,8,7);applyEdit(map,unit,7,8);
+ const s=createSession(map),b=entityAt(s,8,8).entity;
+ moveUnit(s,entityAt(s,8,7).entity.id,8,8);moveUnit(s,entityAt(s,7,8).entity.id,8,8);
+ const initial=selectTile(s,null,1,1).selection;
+ const next=selectTile(s,initial,8,8);
+ assert.deepEqual(next.selection,{kind:'building',id:b.id});
+ assert.equal(selectTile(s,next.selection,8,8).openBuildingId,b.id);
+});
