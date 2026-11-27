@@ -33,10 +33,11 @@ export function drawWorld(ctx,width,height,camera,grass,occupants=[],cursor=null
     if(fill){ctx.fillStyle=fill;ctx.fillRect(left,top,w,h);}
     if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.strokeRect(left+1,top+1,Math.max(1,w-2),Math.max(1,h-2));ctx.lineWidth=1;}
   }
-  for(const p of visibleTerrain(grass,camera,width,height))draw('grass',p.x,p.y);
+  const visible=[...visibleTerrain(grass,camera,width,height)];
+  for(const p of visible)draw('grass',p.x,p.y);
   for(const k of overlay?.reachable??[]){const p=point(k);highlight(p.x,p.y,'#c7cf7040','#b8cc81');}
   const counts=[];
-  for(const o of occupants){
+  for(const o of typeof occupants==='function'?occupants(visible):occupants){
     if(o.representative&&overlay?.deployment?.x===o.x&&overlay.deployment.y===o.y)continue;
     draw(o.sprite,o.x,o.y,o.spent);if(Number.isInteger(o.garrisonCount)&&o.garrisonCount>0)counts.push(o);}
   if(overlay?.deployment){const d=overlay.deployment;draw(d.sprite,d.x,d.y);}

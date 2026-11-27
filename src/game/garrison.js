@@ -2,8 +2,7 @@ import {buildings} from '../content/definitions.js';
 
 /** Map units own a position; stored units have null position and one garrison membership. */
 export function garrisonOf(session,id){
-  for(const b of session.buildings.values())if(b.garrison.includes(id))return b;
-  return null;
+  return session.buildings.get(session.membership.get(id))??null;
 }
 export function hasGarrisonSpace(building){
   return building.garrison.length<buildings[building.type].garrisonCapacity;
@@ -24,5 +23,5 @@ export function displayedUnit(session,building){
   return id&&building.garrison.includes(id)?session.units.get(id)??null:null;
 }
 export function dismissDisplayedUnit(session,buildingId){
-  const b=session.buildings.get(buildingId);if(b)b.displayedUnitId=null;
+  const b=session.buildings.get(buildingId);if(b?.displayedUnitId!=null){b.displayedUnitId=null;session.revision++;}
 }

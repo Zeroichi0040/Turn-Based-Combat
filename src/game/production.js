@@ -1,5 +1,6 @@
 import {buildings,units} from '../content/definitions.js';
 import {hasGarrisonSpace} from './garrison.js';
+import {addProducedUnit} from './locations.js';
 
 /** An order repeats indefinitely. Capacity is derived, never a separate flag. */
 export function productionState(building){
@@ -12,7 +13,7 @@ export function assignProduction(session,buildingId,unitType){
   if(!building||building.production||!buildings[building.type]?.trainable.includes(unitType)||
     !Object.hasOwn(units,unitType))return false;
   building.production={unitType,remaining:units[unitType].trainingTurns};
-  return true;
+  session.revision++;return true;
 }
 export function cancelProduction(session,buildingId){
   const building=session.buildings.get(buildingId);
@@ -28,10 +29,7 @@ export function advanceProduction(session){
     const order=building.production;
     order.remaining--;
     if(order.remaining>0)continue;
-    const id='entity-'+session.nextId++;
-    session.units.set(id,{id,type:order.unitType,position:null,spent:false});
-    building.garrison.push(id);
-    building.displayedUnitId=id;
+    const {id}=addProducedUnit(session,building,order.unitType);
     completed.push({buildingId:building.id,unitId:id,unitType:order.unitType});
     order.remaining=units[order.unitType].trainingTurns;
   }

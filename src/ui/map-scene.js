@@ -1,6 +1,7 @@
 import {renderOccupants} from '../editor/map.js';
 import {createStroke} from '../editor/stroke.js';
 import {centerCameraOnBounds,zoomAt,clampCamera,screenToTile} from '../rendering/camera.js';
+import {createRenderScheduler} from '../rendering/render-scheduler.js';
 import {drawWorld} from '../rendering/world.js';
 import {bindCameraKeyboard} from '../rendering/keyboard-pan.js';
 import {mountDrawer} from './editor-drawer.js';
@@ -36,6 +37,15 @@ function tileAt(clientX,clientY) {
   const rect=canvas.getBoundingClientRect();
   return screenToTile(camera,clientX-rect.left,clientY-rect.top);
 }
+let cachedOverlay=null,overlaySession=null,overlayRevision=-1,overlaySelection=null;
+function overlay(){
+  if(!session)return null;
+  if(overlaySession!==session||overlayRevision!==session.revision||overlaySelection!==selection){
+    cachedOverlay=selectionOverlay(session,selection);overlaySession=session;overlayRevision=session.revision;overlaySelection=selection;
+  }
+  return cachedOverlay;
+}
+const scheduler=createRenderScheduler(draw);
 function render() {
   if(!map||!camera||screen.hidden)return;
   // Freeze camera transform while painting; clamp to updated bounds at stroke end.
@@ -44,8 +54,12 @@ function render() {
     hover=tileAt(lastPointer.x,lastPointer.y);
     coordinate.textContent=hover.x+', '+hover.y;
   } else {hover=null;coordinate.textContent='—';}
+  scheduler.request();
+}
+function draw(){
+  if(!map||!camera||screen.hidden)return;
   ctx.setTransform(ratio,0,0,ratio,0,0);
-  drawWorld(ctx,width,height,camera,terrainState().grass,session?renderSession(session):renderOccupants(map),mode==='edit'&&hover&&!blocked()?{...hover,mode:tool.mode}:null,session?selectionOverlay(session,selection):null);
+  drawWorld(ctx,width,height,camera,terrainState().grass,visible=>session?renderSession(session,visible):renderOccupants(map,visible),mode==='edit'&&hover&&!blocked()?{...hover,mode:tool.mode}:null,overlay());
 }
 function reset() {if(!map||gesture||screen.hidden)return;camera=centerCameraOnBounds(width,height,terrainState().bounds);render();}
 function resize() {
@@ -102,6 +116,11 @@ canvas.addEventListener('pointermove',e=>{
   if(!map||!camera||screen.hidden||blocked()||(gesture&&gesture.id!==e.pointerId))return;
   if(gesture&&!(e.buttons&gesture.button)){endGesture(e);return;}
   lastPointer={x:e.clientX,y:e.clientY};
+  if(!gesture){
+    const next=tileAt(e.clientX,e.clientY),changed=next.x!==hover?.x||next.y!==hover?.y;
+    if(changed){hover=next;coordinate.textContent=next.x+', '+next.y;if(mode==='edit')scheduler.request();}
+    return;
+  }
   if(gesture?.kind==='paint')paint(e);
   else if(gesture?.kind==='pan'){
     camera={...camera,x:camera.x+e.clientX-gesture.x,y:camera.y+e.clientY-gesture.y};
@@ -169,7 +188,7 @@ return {
     canvas.dataset.mode=mode;
     resize();canvas.focus({preventScroll:true});
   },
-  close(){endGesture();screen.hidden=true;if(menu.open)menu.close();if(turnDialog.open)turnDialog.close();garrisonDialog.close();session=null;selection=null;map=null;camera=null;lastPointer=null;},
+  close(){endGesture();scheduler.cancel();screen.hidden=true;if(menu.open)menu.close();if(turnDialog.open)turnDialog.close();garrisonDialog.close();session=null;selection=null;map=null;camera=null;lastPointer=null;overlaySession=null;cachedOverlay=null;overlaySelection=null;},
   setName(name){document.querySelector('#scene-name').textContent=name;},
   setConflict(conflict){for(const id of ['save-copy','exit-copy'])document.querySelector('#'+id).hidden=!conflict;},
   setSaving(value){saving=value;for(const id of ['resume','save-map','exit-map','save-copy','exit-save','exit-copy','exit-discard','exit-cancel'])document.querySelector('#'+id).disabled=value;},
