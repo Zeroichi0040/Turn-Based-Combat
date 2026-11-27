@@ -17,9 +17,9 @@
 ## Known limits
 - Desktop mouse and keyboard; mobile controls not implemented.
 - Single-player sandbox; no combat, opponents, economy, multiplayer or gameplay saves.
-- Local storage has browser quota limits; no cloud sync or backup/export feature. Stale-editor checks prevent sequential overwrites, but localStorage is not a transactional multi-writer database.
+- IndexedDB remains browser/origin local and subject to quota and eviction. Transactional revision checks prevent lost updates. Conflicts offer Save as Copy. Legacy localStorage is retained, and corrupt legacy records can be exported; no general cloud sync/import feature.
 - No artificial map-size cap; very large or dense maps still incur connectivity, persistence and entity iteration costs. Viewport optimization is not a measured FPS guarantee.
 - CI uses Chromium. Other browsers and hardware require separate manual testing.
-- No lockfile is committed yet; dependency resolution is not fully reproducible. Generate and verify a lockfile in a network-enabled checkout before distribution if required.
+- Commit the npm lockfile; use npm ci. Run npm run typecheck and the built-app browser tests.
 
-Version 0.1.0 approved by the owner. Release-hardening PR CI passed 71 unit tests, 19 Chromium browser tests and production build. The one-time initial release workflow only runs for the merged PR #8, verifies the merged commit, and publishes v0.1.0. Future releases require owner approval.
+v0.1.0 was published successfully. Future releases require explicit owner approval. Update package.json and package-lock.json version together, add docs/RELEASE_NOTES_vX.Y.Z.md, merge after review, then manually dispatch Publish approved release on main with the approved version. The workflow verifies the exact commit and refuses an existing tag.

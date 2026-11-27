@@ -16,11 +16,10 @@ export function entityAt(session,x,y){
 }
 /** @param {Session} session @param {Unit} unit @param {Point} destination @param {Building|null} building */
 export function relocateUnit(session,unit,destination,building=null){
+  const sourceId=session.membership.get(unit.id),source=sourceId?session.buildings.get(sourceId):null;
+  if(sourceId&&(!source||!source.garrison.includes(unit.id)))throw Error('Invalid garrison membership');
   if(unit.position)session.occupancy.delete(key(unit.position.x,unit.position.y));
-  const sourceId=session.membership.get(unit.id);
-  if(sourceId){
-    const source=session.buildings.get(sourceId);
-    if(!source)throw Error('Invalid garrison membership');
+  if(source){
     source.garrison.splice(source.garrison.indexOf(unit.id),1);
     if(source.displayedUnitId===unit.id)source.displayedUnitId=null;
     session.membership.delete(unit.id);

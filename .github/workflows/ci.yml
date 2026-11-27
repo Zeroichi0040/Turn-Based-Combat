@@ -17,9 +17,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
-      - name: Capture generated lockfile for audit branch
-        run: node -e 'console.log("LOCKFILE:"+JSON.stringify(JSON.parse(require("fs").readFileSync("package-lock.json","utf8"))))'
+      - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
       - run: npm run build

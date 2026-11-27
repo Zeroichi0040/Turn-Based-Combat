@@ -1,5 +1,5 @@
 import './styles.css';
-import {createMapStore,hydrateMap,MapConflict} from './storage/map-store.js';
+import {createMapStore,MapConflict} from './storage/map-store.js';
 import {createMapScene} from './ui/map-scene.js';
 
 const nav=document.querySelector('#navigation'),heading=document.querySelector('#nav-title');
@@ -53,7 +53,7 @@ async function exportRecord(id){try{download('map-backup.json',JSON.stringify(aw
 async function openMap(id,mode){
   if(busy)return;busy=true;
   try{
-    const record=await store.get(id),map=hydrateMap(record);
+    const {record,map}=await store.load(id);
     active={id,mode,baseline:record};savedRevision=map.revision;nav.hidden=true;
     scene.open(map,mode,record.name);updateDirty();
   }catch(err){scene.close();active=null;updateDirty();await renderNav();report(error,err);}finally{busy=false;}

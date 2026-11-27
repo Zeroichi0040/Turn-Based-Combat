@@ -15,8 +15,9 @@ export function productionState(building){
 /** @param {Session} session @param {string} buildingId @param {UnitType} unitType */
 export function assignProduction(session,buildingId,unitType){
   const building=session.buildings.get(buildingId);
-  if(!building||building.production||!buildings[building.type]?.trainable.includes(unitType)||
-    !Object.hasOwn(units,unitType))return false;
+  if(!building||building.production||!Object.hasOwn(units,unitType))return false;
+  /** @type {readonly string[]} */ const trainable=buildings[building.type].trainable;
+  if(!trainable.includes(unitType))return false;
   building.production={unitType,remaining:units[unitType].trainingTurns};
   session.revision++;return true;
 }
@@ -25,7 +26,7 @@ export function cancelProduction(session,buildingId){
   const building=session.buildings.get(buildingId);
   if(!building?.production)return false;
   building.production=null;
-  return true;
+  session.revision++;return true;
 }
 /** Called exactly once per turn advance, after resetting existing units. */
 /** @param {Session} session */

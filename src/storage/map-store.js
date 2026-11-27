@@ -55,10 +55,10 @@ export function serializeMap(map){
 function metadata(record){
   return {id:record.id,name:record.name,grassCount:record.grass.length,occupantCount:record.occupants.length,revision:record.revision};
 }
-function validateRecord(record){
+function validateMetadata(record){
   if(!record||typeof record.id!=='string'||!record.id||!normalizeName(record.name)||record.name!==record.name.trim())fail('Invalid saved map metadata.');
-  hydrateMap(record);
 }
+function validateRecord(record){validateMetadata(record);return hydrateMap(record);}
 export class MapConflict extends Error{
   constructor(){super('This map changed in another tab or was deleted. Save as Copy to keep your edits.');this.name='MapConflict';}
 }
@@ -116,15 +116,16 @@ export function createMapStore(storage,{factory=globalThis.indexedDB,dbName,make
   }
   return {
     list(){return read(['catalog'],async({catalog})=>request(catalog.getAll()));},
-    async get(id){
-      return read(['maps'],async({maps})=>{const record=await find(maps,id);validateRecord(record);return record;});
+    async load(id){
+      return read(['maps'],async({maps})=>{const record=await find(maps,id);return {record,map:validateRecord(record)};});
     },
+    async get(id){return (await this.load(id)).record;},
     create(name){return insert(name,{grass:newTerrain(),occupants:new Map()});},
     copy(name,map){return insert(name,map);},
     rename(id,name,expectedRevision){
       const next=normalizeName(name);if(!next)fail('Enter a map name.');
       return write(['maps','catalog'],async({maps,catalog})=>{
-        const old=await find(maps,id);validateRecord(old);
+        const old=await find(maps,id);validateMetadata(old);
         if(expectedRevision!==undefined&&old.revision!==expectedRevision)throw new MapConflict();
         const record={...old,name:next,revision:old.revision+1};
         await request(maps.put(record));await request(catalog.put(metadata(record)));return record;
