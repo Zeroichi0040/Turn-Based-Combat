@@ -1,0 +1,62 @@
+name: Publish approved release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Approved version, matching package.json (e.g. 0.1.1)'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main' && github.repository == 'Zeroichi0040/Turn-Based-Combat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - name: Validate version and notes
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          node -e 'const v=process.env.VERSION;if(!/^\d+\.\d+\.\d+$/.test(v)||require("./package.json").version!==v||!require("fs").existsSync("docs/RELEASE_NOTES_v"+v+".md"))process.exit(1)'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Publish exact tested commit (never overwrite an existing tag)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "Tag exists; refusing to overwrite."
+            exit 1
+          fi
+          gh release create "$tag" --target "$RELEASE_SHA" --title "Turn-Based Combat $tag" --notes-file "docs/RELEASE_NOTES_$tag.md" --latest

@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {centerCameraOnBounds} from '../src/rendering/camera.js';
+import {resetGeometry as centerCameraOnBounds,settleFrame,readSavedMaps} from './helpers.js';
 async function create(page,name=''){
   await page.getByRole('button',{name:'New Map',exact:true}).click();
   await page.getByLabel('Map name').fill(name);
@@ -76,7 +76,7 @@ test('an older editor tab cannot silently overwrite newer terrain changes',async
  await expect(page.locator('#status')).toHaveText('Map saved.');
  await menu(page);await page.getByRole('button',{name:'Exit',exact:true}).click();
  await expect(page.locator('.saved-map')).toHaveCount(2);
- const saved=await page.evaluate(async()=>{const {createMapStore}=await import('/src/storage/map-store.js');const store=createMapStore(localStorage);const rows=await store.list();return Promise.all(rows.map(async r=>({name:r.name,occupants:(await store.get(r.id)).occupants})));});
+ const saved=await readSavedMaps(page);
  expect(saved.find(r=>r.name==='Shared map').occupants).toEqual([{x:4,y:4,category:'buildings',id:'townHall'}]);
  expect(saved.find(r=>r.name==='Shared map (copy)').occupants).toEqual([{x:5,y:4,category:'units',id:'swordsman'}]);
  await newer.close();

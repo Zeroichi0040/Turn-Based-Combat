@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {centerCameraOnBounds} from '../src/rendering/camera.js';
+import {resetGeometry as centerCameraOnBounds,settleFrame,readSavedMaps} from './helpers.js';
 const initial={minX:0,minY:0,maxX:9,maxY:9};
 async function tile(page,x,y,bounds=initial){
   await page.getByRole('button',{name:'Reset camera'}).click();
@@ -68,7 +68,7 @@ test('drawer overlays the canvas without changing its size or position',async({p
   await page.mouse.move(x,y);await page.mouse.down({button:'right'});
   await page.mouse.move(x+20,y+36);await page.mouse.up({button:'right'});
   await reset.hover();
-  const draws=()=>page.evaluate(()=>window.__terrainDraws);
+  const draws=async()=>{await settleFrame(page);return page.evaluate(()=>window.__terrainDraws);};
   const before=await draws();expect(before).toHaveLength(100);
   await page.getByRole('button',{name:'Close drawer'}).click();
   await expect(page.locator('#drawer-panel')).toBeHidden();

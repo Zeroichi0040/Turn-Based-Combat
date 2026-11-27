@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';
-import {centerCameraOnBounds} from '../src/rendering/camera.js';
+import {resetGeometry as centerCameraOnBounds} from './helpers.js';
 const bounds={minX:0,minY:0,maxX:9,maxY:9};
 async function tile(page,x,y){
   const box=await page.locator('#world').boundingBox(),c=centerCameraOnBounds(box.width,box.height,bounds);
