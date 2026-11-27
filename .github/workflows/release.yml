@@ -39,7 +39,7 @@ jobs:
       - name: Validate version and notes
         id: version
         env:
-          REQUESTED_VERSION: ${{ needs.verify.outputs.version }}
+          REQUESTED_VERSION: ${{ inputs.version }}
           RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
           RELEASE_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
         run: |
@@ -59,13 +59,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ needs.verify.outputs.sha }}
           persist-credentials: false
       - name: Publish exact tested commit (never overwrite an existing tag)
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.verify.outputs.version }}
           RELEASE_SHA: ${{ needs.verify.outputs.sha }}
         run: |
           set -euo pipefail
