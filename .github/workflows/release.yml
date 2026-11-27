@@ -55,8 +55,5 @@ jobs:
         run: |
           set -euo pipefail
           tag="v$VERSION"
-          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
-            echo "Tag exists; refusing to overwrite."
-            exit 1
-          fi
-          gh release create "$tag" --target "$RELEASE_SHA" --title "Turn-Based Combat $tag" --notes-file "docs/RELEASE_NOTES_$tag.md" --latest
+          gh api --method POST "repos/$GH_REPO/git/refs" -f "ref=refs/tags/$tag" -f "sha=$RELEASE_SHA"
+          gh release create "$tag" --verify-tag --title "Turn-Based Combat $tag" --notes-file "docs/RELEASE_NOTES_$tag.md" --latest

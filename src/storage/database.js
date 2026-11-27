@@ -12,8 +12,9 @@ export function openDatabase(factory,name=DB_NAME){
       for(const name of ['maps','catalog','settings'])req.result.createObjectStore(name,{keyPath:'id'});
     };
     req.onerror=()=>reject(req.error);
-    req.onblocked=()=>reject(new Error('Close other game tabs to open map storage.'));
-    req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>db.close();resolve(db);};
+    let blocked=false;
+    req.onblocked=()=>{blocked=true;reject(new Error('Close other game tabs to open map storage.'));};
+    req.onsuccess=()=>{const db=req.result;if(blocked){db.close();return;}db.onversionchange=()=>db.close();resolve(db);};
   });
 }
 /** All operations within body must be IndexedDB requests (no unrelated async work). */

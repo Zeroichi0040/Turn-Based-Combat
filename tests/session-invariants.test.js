@@ -15,7 +15,7 @@ function assertInvariants(s){
   assert.equal(id,b.id);assert.ok(!allIds.has(id));allIds.add(id);
   const p=key(b.position.x,b.position.y);
   assert.ok(s.grass.has(p));assert.ok(!positions.has(p));positions.add(p);
-  assert.equal(s.occupancy.get(p)?.id,id);
+  assert.equal(s.occupancy.get(p)?.id,id);assert.equal(s.occupancy.get(p)?.kind,'building');
   assert.ok(b.garrison.length<=buildings[b.type].garrisonCapacity);
   if(b.displayedUnitId!==null)assert.ok(b.garrison.includes(b.displayedUnitId));
   if(b.production){
@@ -34,6 +34,7 @@ function assertInvariants(s){
   if(u.position){
    const p=key(u.position.x,u.position.y);
    assert.ok(s.grass.has(p));assert.ok(!positions.has(p));positions.add(p);
+   assert.equal(s.occupancy.get(p)?.id,id);assert.equal(s.occupancy.get(p)?.kind,'unit');
   }
  }
 }

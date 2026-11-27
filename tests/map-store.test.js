@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {IDBFactory} from 'fake-indexeddb';
+import {openDatabase,transaction,request} from '../src/storage/database.js';
 import {createMapStore,hydrateMap,serializeMap,STORAGE_KEY,MapConflict} from '../src/storage/map-store.js';
 import {applyEdit} from '../src/editor/map.js';
 function fixture(raw=null){
  const factory=new IDBFactory();let id=0;
  const storage={getItem:k=>k===STORAGE_KEY?raw:null};
  const open=()=>createMapStore(storage,{factory,makeId:()=>String(++id)});
- return {store:open(),open,storage};
+ return {store:open(),open,storage,factory};
 }
 const unit={mode:'place',category:'units',id:'swordsman'};
 test('default names, independent maps and persistent rename/delete',async()=>{
@@ -71,4 +72,27 @@ test('invalid terrain, coordinates and occupants remain rejected',async()=>{
  for(const grass of [[],['0,0','2,0'],['0,0','0,0'],['01,0'],['9007199254740992,0']])assert.throws(()=>hydrateMap({...a,grass}));
  const u={x:0,y:0,category:'units',id:'swordsman'};
  for(const occupants of [[u,u],[{...u,x:-1}],[{...u,id:'toString'}],[{...u,category:'tiles',id:'grass'}]])assert.throws(()=>hydrateMap({...a,occupants}));
+});
+
+test('transaction abort rolls back both map and metadata changes',async()=>{
+ const {store,factory}=fixture(),a=await store.create('A'),db=await openDatabase(factory);
+ await assert.rejects(transaction(db,['maps','catalog'],'readwrite',async({maps,catalog})=>{
+  await request(maps.put({...a,name:'Uncommitted'}));
+  await request(catalog.put({id:a.id,name:'Uncommitted'}));
+  throw Error('Simulated failure before commit');
+ }),/Simulated failure/);
+ assert.equal((await store.get(a.id)).name,'A');assert.equal((await store.list())[0].name,'A');db.close();
+});
+test('a damaged stored record is isolated on load and can still be exported',async()=>{
+ const {store,factory}=fixture(),a=await store.create('A'),b=await store.create('B'),db=await openDatabase(factory);
+ await transaction(db,['maps'],'readwrite',async({maps})=>request(maps.put({...b,grass:['0,0','2,0']})));
+ await assert.rejects(store.load(b.id),/disconnected/);
+ assert.equal((await store.list()).find(row=>row.id===b.id).corrupt,true);
+ assert.equal((await store.get(a.id)).name,'A');
+ assert.deepEqual((await store.exportRecord(b.id)).grass,['0,0','2,0']);db.close();
+});
+test('creation order survives migration and later inserts',async()=>{
+ const raw=JSON.stringify({version:1,maps:[{id:'z',name:'First',grass:['0,0'],occupants:[]},{id:'a',name:'Second',grass:['0,0'],occupants:[]}]});
+ const {store}=fixture(raw);await store.create('Third');
+ assert.deepEqual((await store.list()).map(row=>row.name),['First','Second','Third']);
 });

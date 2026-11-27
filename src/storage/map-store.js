@@ -53,7 +53,7 @@ export function serializeMap(map){
   return {grass:[...map.grass],occupants:[...map.occupants].map(([k,o])=>({...point(k),category:o.category,id:o.id}))};
 }
 function metadata(record){
-  return {id:record.id,name:record.name,grassCount:record.grass.length,occupantCount:record.occupants.length,revision:record.revision};
+  return {id:record.id,name:record.name,grassCount:record.grass.length,occupantCount:record.occupants.length,revision:record.revision,createdAt:record.createdAt};
 }
 function validateMetadata(record){
   if(!record||typeof record.id!=='string'||!record.id||!normalizeName(record.name)||record.name!==record.name.trim())fail('Invalid saved map metadata.');
@@ -78,19 +78,20 @@ export function createMapStore(storage,{factory=globalThis.indexedDB,dbName,make
         if(raw!=null){
           let data;try{data=JSON.parse(raw);}catch{fail('Legacy maps are unreadable. Export the legacy backup before recovery.');}
           if(data?.version!==SAVE_VERSION||!Array.isArray(data.maps))fail('Unsupported legacy save format. Original data is preserved.');
-          const seen=new Set();
+          const seen=new Set(),reserved=new Set(data.maps.map(item=>item?.id)),importedAt=Date.now();
           for(const [i,item] of data.maps.entries()){
             try{
               validateRecord(item);
               if(seen.has(item.id))fail('Duplicate map identifier.');
             }catch(err){
-              const id='quarantine-'+makeId();
+              let id='quarantine-'+makeId();
+              while(reserved.has(id))id+='-';reserved.add(id);
               await request(maps.add({id,raw:item}));
-              await request(catalog.add({id,name:typeof item?.name==='string'?item.name:'Corrupt map '+(i+1),corrupt:true,error:err.message}));
+              await request(catalog.add({id,name:typeof item?.name==='string'?item.name:'Corrupt map '+(i+1),corrupt:true,error:err.message,createdAt:importedAt+i}));
               continue;
             }
             seen.add(item.id);
-            const record={...item,revision:1};
+            const record={...item,revision:1,createdAt:importedAt+i};
             await request(maps.add(record));await request(catalog.add(metadata(record)));
           }
         }
@@ -110,22 +111,37 @@ export function createMapStore(storage,{factory=globalThis.indexedDB,dbName,make
     hydrateMap(content);
     return write(['maps','catalog'],async({maps,catalog})=>{
       const id=makeId(),records=await request(catalog.getAll());
-      const record={id,name:normalizeName(name)||defaultMapName(records),revision:1,...content};
+      const createdAt=records.reduce((latest,row)=>Math.max(latest,(row.createdAt??0)+1),Date.now());
+      const record={id,name:normalizeName(name)||defaultMapName(records),revision:1,createdAt,...content};
       await request(maps.add(record));await request(catalog.add(metadata(record)));return record;
     });
   }
+  async function load(id){
+    // Recheck in the transaction before quarantining a bad record, rather than
+    // classifying a newer revision using an obsolete read.
+    const result=await write(['maps','catalog'],async({maps,catalog})=>{
+      const record=await find(maps,id);
+      try{return {record,map:validateRecord(record)};}
+      catch(err){
+        const row=await find(catalog,id);
+        await request(catalog.put({...row,corrupt:true,error:err.message}));
+        return {error:err.message};
+      }
+    });
+    if(result.error)fail(result.error);
+    return result;
+  }
   return {
-    list(){return read(['catalog'],async({catalog})=>request(catalog.getAll()));},
-    async load(id){
-      return read(['maps'],async({maps})=>{const record=await find(maps,id);return {record,map:validateRecord(record)};});
-    },
-    async get(id){return (await this.load(id)).record;},
+    list(){return read(['catalog'],async({catalog})=>(await request(catalog.getAll())).sort((a,b)=>(a.createdAt??0)-(b.createdAt??0)));},
+    load,
+    async get(id){return (await load(id)).record;},
     create(name){return insert(name,{grass:newTerrain(),occupants:new Map()});},
     copy(name,map){return insert(name,map);},
     rename(id,name,expectedRevision){
       const next=normalizeName(name);if(!next)fail('Enter a map name.');
       return write(['maps','catalog'],async({maps,catalog})=>{
         const old=await find(maps,id);validateMetadata(old);
+        const row=await find(catalog,id);if(row.corrupt)fail('Export this unreadable map before recovery.');
         if(expectedRevision!==undefined&&old.revision!==expectedRevision)throw new MapConflict();
         const record={...old,name:next,revision:old.revision+1};
         await request(maps.put(record));await request(catalog.put(metadata(record)));return record;
@@ -135,7 +151,7 @@ export function createMapStore(storage,{factory=globalThis.indexedDB,dbName,make
       const content=serializeMap(map);hydrateMap(content);
       return write(['maps','catalog'],async({maps,catalog})=>{
         const old=await request(maps.get(id));
-        if(!old||old.revision!==expectedRevision)throw new MapConflict();
+        if(!old||old.revision!==expectedRevision||(await request(catalog.get(id)))?.corrupt)throw new MapConflict();
         const record={...old,...content,revision:old.revision+1};
         await request(maps.put(record));await request(catalog.put(metadata(record)));return record;
       });

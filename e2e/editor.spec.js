@@ -92,3 +92,11 @@ test('drag eraser removes another layer only on re-entry',async({page})=>{
   await page.mouse.up();
   await expect(page.locator('#map-stats')).toHaveText('98 grass · 0 occupants');
 });
+
+test('releasing the initiating mouse button stops a stroke even while another button is held',async({page})=>{
+ await page.getByRole('button',{name:'Units',exact:true}).click();
+ const a=await tile(page,4,4),b={x:a.x+64,y:a.y};
+ await page.mouse.move(a.x,a.y);await page.mouse.down({button:'left'});await page.mouse.down({button:'right'});
+ await page.mouse.up({button:'left'});await page.mouse.move(b.x,b.y);await page.mouse.up({button:'right'});
+ await expect(page.locator('#map-stats')).toHaveText('100 grass · 1 occupants');
+});
